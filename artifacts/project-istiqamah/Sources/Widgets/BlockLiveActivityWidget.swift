@@ -34,13 +34,15 @@ struct BlockLiveActivityWidget: Widget {
                         .padding(.top, 12)
                 }
             } compactLeading: {
-                activityIcon(context, size: 16)
-                    .frame(width: 20, height: 20)
+                activityIcon(context, size: 12)
+                    .frame(width: 16, height: 16)
+                    .fixedSize()
                     .accessibilityLabel("\(blockTitle(context)), \(statusLabel(context))")
             } compactTrailing: {
                 compactTimer(context)
-                    .font(.system(size: 16, weight: .semibold, design: .monospaced))
+                    .font(.system(size: 12, weight: .semibold, design: .monospaced))
                     .foregroundStyle(timerAccent)
+                    .fixedSize(horizontal: true, vertical: false)
             } minimal: {
                 minimalContent(context)
             }
@@ -137,8 +139,9 @@ struct BlockLiveActivityWidget: Widget {
 
     @ViewBuilder
     private func minimalContent(_ context: ActivityViewContext<BlockActivityAttributes>) -> some View {
-        activityIcon(context, size: 16)
-            .frame(width: 20, height: 20)
+        activityIcon(context, size: 12)
+            .frame(width: 16, height: 16)
+            .fixedSize()
     }
 
     private func metricGrid(_ context: ActivityViewContext<BlockActivityAttributes>) -> some View {

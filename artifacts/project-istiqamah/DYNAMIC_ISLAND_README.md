@@ -68,21 +68,24 @@ All values below are SwiftUI points.
 
 ```swift
 // Leading side
-activityIcon(context, size: 16)
-    .frame(width: 20, height: 20)
+activityIcon(context, size: 12)
+    .frame(width: 16, height: 16)
+    .fixedSize()
 
 // Trailing side
 countdown(context)
-    .font(.system(size: 16, weight: .semibold, design: .monospaced))
+    .font(.system(size: 12, weight: .semibold, design: .monospaced))
     .foregroundStyle(timerAccent)
     .minimumScaleFactor(0.68)
     .lineLimit(1)
+    .fixedSize(horizontal: true, vertical: false)
 ```
 
 The trailing timer relies on WidgetKit's native compact-region margins, with no
-manual trailing padding or forced width. Adding either can create dead space or
-clip longer hour-based timers. Check both a short value such as `12:12` and a
-long value such as `3:12:12` when changing the timer presentation.
+manual trailing padding or forced minimum width. The compact icon and timer use
+their intrinsic fixed sizes so the island does not consume extra horizontal
+space. Check both a short value such as `12:12` and a long value such as
+`3:12:12` when changing the timer presentation.
 
 ### Expanded
 
