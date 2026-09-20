@@ -41,7 +41,6 @@ struct BlockLiveActivityWidget: Widget {
                 compactTimer(context)
                     .font(.system(size: 16, weight: .semibold, design: .monospaced))
                     .foregroundStyle(timerAccent)
-                    .padding(.trailing, 8)
             } minimal: {
                 minimalContent(context)
             }

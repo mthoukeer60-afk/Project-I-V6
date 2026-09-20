@@ -77,15 +77,12 @@ countdown(context)
     .foregroundStyle(timerAccent)
     .minimumScaleFactor(0.68)
     .lineLimit(1)
-    .padding(.trailing, 8)
 ```
 
-The current layout does not force a width on the trailing timer. To experiment
-with the small running appearance, change only `compactTimer(_:)` or the
-`compactTrailing` closure. A fixed `.frame(width:)`
-can clip longer hour-based timers; `.frame(minWidth:)` can let the compact view
-grow. Check both a short value such as `12:12` and a long value such as
-`3:12:12` before settling on either approach.
+The trailing timer relies on WidgetKit's native compact-region margins, with no
+manual trailing padding or forced width. Adding either can create dead space or
+clip longer hour-based timers. Check both a short value such as `12:12` and a
+long value such as `3:12:12` when changing the timer presentation.
 
 ### Expanded
 
