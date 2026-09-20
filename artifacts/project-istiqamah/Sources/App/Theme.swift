@@ -7,7 +7,6 @@ enum AppTheme {
     static let primary = Color(red: 0.56, green: 0.66, blue: 1.0)
     static let muted = Color(red: 0.62, green: 0.64, blue: 0.62)
     static let border = Color.white.opacity(0.09)
-    static let flame = Color(red: 1.0, green: 0.45, blue: 0.16)
 }
 
 extension View {

@@ -38,8 +38,8 @@ struct SettingsView: View {
                 }
 
                 Section("Live blocks") {
-                    Label("Dynamic Island & Lock Screen", systemImage: "flame.fill")
-                        .foregroundStyle(AppTheme.flame)
+                    Label("Dynamic Island & Lock Screen", systemImage: "clock.fill")
+                        .foregroundStyle(AppTheme.primary)
                     LabeledContent("Status", value: store.liveActivityStatus)
                     LabeledContent("Reminder sync", value: store.notificationSyncStatus)
                     LabeledContent("Background refresh", value: backgroundRefreshStatus)

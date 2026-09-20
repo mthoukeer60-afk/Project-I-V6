@@ -30,8 +30,8 @@ The native application lives in [`artifacts/project-istiqamah`](artifacts/projec
 | Reminder sounds | System Default, Gentle Chime, Bright Bell, and Focus Pulse choices; iOS 26 uses the system ringtone for System Default block-start alerts |
 | Live Activities | Starts or updates the current block, removes completed or outdated activities, schedules upcoming starts on iOS 26, and provides status, refresh, and restart controls in Settings |
 | Background refresh | Reloads saved blocks during system-granted background time, refreshes notifications and Live Activities, and schedules the next best-effort wakeup near a block transition |
-| Dynamic Island | Compact icon, block name, and remaining time; expanded timer, progress, Pause/Resume, and End controls; animated native flame while running |
-| Lock Screen | Minimal block name, schedule, live countdown, progress, Pause/Resume, End, and tap-to-open behavior |
+| Dynamic Island | Compact clock/checkmark and remaining time; expanded circular Pause/Resume and End controls, large timer, and four-column block metrics |
+| Lock Screen | Clean timer header with clock/checkmark, circular Pause/Resume and End controls, divider, and elapsed/start/end/status metrics |
 | Deep links | Notification and Live Activity taps open the Today tab on the relevant date and block; an ended-block link can record completion |
 | Local data | Codable JSON persistence in Application Support, visible save/recovery failures, preservation of unreadable data, and exclusion of private app data from device/iCloud backup |
 | Preferences | Reminder toggle, early-reminder and snooze timing, sound choice, haptic toggle, notification permission status, and shortcut to iOS Settings |
@@ -103,8 +103,8 @@ unsigned IPA artifact. See [`docs/github-actions-ios.md`](docs/github-actions-io
 - Immediate WhatsApp-style remote updates require an APNs provider and backend.
   This local-first app has no account or server, so it does not register or
   upload push tokens.
-- Dynamic Island is available only on supported iPhone models. The flame is an
-  animated native SF Symbol, not a bundled GIF.
+- Dynamic Island is available only on supported iPhone models. Its running,
+  paused, and completed states use native clock, pause, and checkmark symbols.
 - An unsigned IPA must be signed before it can be installed on an iPhone.
 - Standard time-sensitive notification sounds still respect the device's notification, silent-mode, and Focus settings. Clock-style overrides require AlarmKit on iOS 26 or Apple's restricted Critical Alerts entitlement.
 - Templates, tags, and search are not implemented.

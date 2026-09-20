@@ -1,9 +1,10 @@
 # Dynamic Island and Live Activity Guide
 
 This guide maps the Live Activity implementation so layout changes can stay
-isolated from the rest of the app. The code baseline is the source used by
+isolated from the rest of the app. The redesign started from the source used by
 successful GitHub Actions run **Build unsigned iOS IPA #14**, commit
-`7d6a38baeda24d53c44d95f26f8a43957526e8c2`.
+`7d6a38baeda24d53c44d95f26f8a43957526e8c2`, and intentionally replaces that
+build's denser presentation with the clean metric layout documented below.
 
 Run: <https://github.com/MasalaOats/Project-I-V5/actions/runs/35307583613>
 
@@ -29,7 +30,7 @@ Pause / Resume / End intents return actions to AppStore
 
 | File | Responsibility |
 | --- | --- |
-| `Sources/Widgets/BlockLiveActivityWidget.swift` | All Lock Screen and Dynamic Island visuals, sizing, labels, progress, buttons, and previews |
+| `Sources/Widgets/BlockLiveActivityWidget.swift` | All Lock Screen and Dynamic Island visuals, sizing, metrics, buttons, and previews |
 | `Sources/Widgets/ProjectIstiqamahWidgets.swift` | Registers the Live Activity widget extension |
 | `Sources/Shared/BlockActivityAttributes.swift` | Defines the block identity, content state, pause state, dates, and deep link |
 | `Sources/Shared/BlockLiveActivityIntents.swift` | Implements Pause/Resume and End button intents |
@@ -46,13 +47,13 @@ presentations:
 
 | Presentation | Code to edit in `BlockLiveActivityWidget.swift` | Current Build #14 content |
 | --- | --- | --- |
-| Lock Screen/banner | `lockScreen(_:)` | Icon, status, title, remaining time, progress, elapsed time, schedule, Pause/Resume, and End |
-| Compact leading | `compactLeading` closure | Running flame, paused flame, or completed checkmark |
+| Lock Screen/banner | `lockScreen(_:)` | Clock/pause/checkmark, large timer, circular Pause/Resume and End controls, divider, and metric grid |
+| Compact leading | `compactLeading` closure | Running clock, paused symbol, or completed checkmark |
 | Compact trailing | `compactTrailing` and `compactTimer(_:)` | Remaining countdown or `00:00` |
 | Minimal | `minimal` and `minimalContent(_:)` | Icon only; used when iOS is showing multiple Live Activities |
-| Expanded leading | `DynamicIslandExpandedRegion(.leading)` | Activity icon |
-| Expanded trailing | `DynamicIslandExpandedRegion(.trailing)` | Large countdown and Remaining/Complete label |
-| Expanded bottom | `DynamicIslandExpandedRegion(.bottom)` | Status, title, progress, elapsed/duration, Pause/Resume, and End |
+| Expanded leading | `DynamicIslandExpandedRegion(.leading)` | Circular Pause/Resume and End controls |
+| Expanded trailing | `DynamicIslandExpandedRegion(.trailing)` | Large gold countdown |
+| Expanded bottom | `DynamicIslandExpandedRegion(.bottom)` | Elapsed/duration, start, end, and status metric grid |
 
 iOS chooses compact, minimal, or expanded presentation. Normally one active
 Live Activity uses compact mode. A long press opens expanded mode. The app can
@@ -67,18 +68,21 @@ All values below are SwiftUI points.
 
 ```swift
 // Leading side
-activityIcon(context, size: 12)
-    .frame(width: 16, height: 16)
+activityIcon(context, size: 16)
+    .frame(width: 20, height: 20)
 
 // Trailing side
 countdown(context)
-    .font(.system(size: 12, weight: .semibold, design: .monospaced))
-    .minimumScaleFactor(0.72)
+    .font(.system(size: 16, weight: .semibold, design: .monospaced))
+    .foregroundStyle(timerAccent)
+    .minimumScaleFactor(0.68)
     .lineLimit(1)
+    .padding(.trailing, 8)
 ```
 
-Build #14 does not force a width on the trailing timer. To experiment with the
-small running appearance, change only `compactTimer(_:)`. A fixed `.frame(width:)`
+The current layout does not force a width on the trailing timer. To experiment
+with the small running appearance, change only `compactTimer(_:)` or the
+`compactTrailing` closure. A fixed `.frame(width:)`
 can clip longer hour-based timers; `.frame(minWidth:)` can let the compact view
 grow. Check both a short value such as `12:12` and a long value such as
 `3:12:12` before settling on either approach.
@@ -87,15 +91,13 @@ grow. Check both a short value such as `12:12` and a long value such as
 
 | Element | Current value |
 | --- | --- |
-| Leading icon | 16-point symbol in a `20 x 20` frame |
-| Countdown | 24-point semibold monospaced font |
-| Countdown container | Maximum width `104` |
-| Status/title fonts | `10` and `14` |
-| Progress frame | Height `2`, visually scaled to half height |
-| Elapsed timer | 12-point semibold monospaced font |
-| Pause/Resume and End buttons | Height `44` |
-| Expanded horizontal content margins | `24` |
-| Expanded bottom content margin | `24` |
+| Leading controls | Two `36 x 36` circular buttons for Pause/Resume and End |
+| Countdown | 28-point semibold monospaced font in warm gold |
+| Countdown container | Maximum width `120` |
+| Bottom metrics | Elapsed/duration, start, end, and status |
+| Metric value/label fonts | `12` and `7` |
+| Expanded horizontal content margins | `20` |
+| Expanded bottom content margin | `20` |
 
 Edit the three `DynamicIslandExpandedRegion` blocks and the two
 `.contentMargins` modifiers to change the expanded appearance.
@@ -104,12 +106,11 @@ Edit the three `DynamicIslandExpandedRegion` blocks and the two
 
 | Element | Current value |
 | --- | --- |
-| Icon | 16-point symbol in a `22 x 22` frame |
-| Title | 16-point semibold font |
-| Countdown | 22-point semibold monospaced font |
-| Countdown container | Maximum width `110` |
-| Outer padding | `14` horizontal and vertical |
-| Pause/Resume and End buttons | Height `44` |
+| Icon | 24-point symbol in a `30 x 30` frame |
+| Countdown | 32-point medium monospaced font in warm gold |
+| Pause/Resume and End controls | Two `40 x 40` circular buttons |
+| Bottom metrics | Elapsed/duration, start, end, and status |
+| Outer padding | `16` on all sides |
 
 Edit `lockScreen(_:)` and `activityActions(_:)` for this presentation. These
 changes do not control the compact Dynamic Island.
@@ -118,9 +119,9 @@ changes do not control the compact Dynamic Island.
 
 | State | Icon | Countdown | Labels/actions |
 | --- | --- | --- | --- |
-| Running | Animated flame | Live timer to `endDate` | Focus, Remaining, Elapsed, Pause, End |
-| Paused | Inactive flame | Frozen duration from `pausedAt` to `endDate` | Paused, Resume, End |
-| Stale/completed | Checkmark | `00:00` | Block Ended, Complete, Duration; action buttons hidden |
+| Running | Indigo clock | Live timer to `endDate` | Focus status, Elapsed, Pause, End |
+| Paused | Pause circle | Frozen duration from `pausedAt` to `endDate` | Paused status, Resume, End |
+| Stale/completed | Checkmark | `00:00` | Block Ended, Duration; action buttons hidden |
 
 `context.isStale` controls the completed visuals. In normal synchronization,
 `LiveActivityManager` ends completed or expired activities with an immediate
@@ -130,8 +131,8 @@ dismissal policy, so the completed presentation may be brief or not visible.
 
 - `countdown(_:)` selects live, paused, or completed time text.
 - `elapsed(_:)` selects live, paused, or total duration text.
-- `progress(_:)` renders live, paused, or completed progress.
-- `activityIcon(_:size:)` selects flame or checkmark.
+- `metricGrid(_:)` renders elapsed/duration, start, end, and status.
+- `activityIcon(_:size:)` selects clock, pause, or checkmark.
 - `statusLabel(_:)` returns Focus, Paused, or Block Ended.
 - `blockTitle(_:)` returns the block name or Block complete.
 - `dynamicIslandActions(_:)` renders expanded Pause/Resume and End buttons.

@@ -129,8 +129,8 @@ struct TodayView: View {
                     .tracking(1.4)
                     .foregroundStyle(AppTheme.primary)
                 Spacer()
-                Image(systemName: pausedAt == nil ? (phase == .running ? "flame.fill" : "timer") : "pause.fill")
-                    .foregroundStyle(isActivelyRunning ? AppTheme.flame : AppTheme.primary)
+                Image(systemName: pausedAt == nil ? (phase == .running ? "clock.fill" : "timer") : "pause.circle.fill")
+                    .foregroundStyle(AppTheme.primary)
                     .symbolEffect(
                         .variableColor.iterative,
                         options: .repeating.speed(0.7),

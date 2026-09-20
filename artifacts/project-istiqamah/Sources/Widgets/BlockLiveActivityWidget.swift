@@ -5,7 +5,8 @@ import SwiftUI
 import WidgetKit
 
 struct BlockLiveActivityWidget: Widget {
-    private let accent = Color(red: 0.40, green: 0.43, blue: 0.96)
+    private let accent = Color(red: 0.56, green: 0.66, blue: 1.0)
+    private let timerAccent = Color(red: 0.98, green: 0.82, blue: 0.30)
 
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: BlockActivityAttributes.self) { context in
@@ -16,228 +17,165 @@ struct BlockLiveActivityWidget: Widget {
         } dynamicIsland: { context in
             DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
-                    activityIcon(context, size: 16)
-                        .frame(width: 20, height: 20)
+                    dynamicIslandActions(context)
                 }
 
                 DynamicIslandExpandedRegion(.trailing) {
-                    VStack(alignment: .trailing, spacing: 1) {
-                        countdown(context)
-                            .font(.system(size: 24, weight: .semibold, design: .monospaced))
-                            .minimumScaleFactor(0.72)
-                        Text(context.isStale ? "COMPLETE" : "REMAINING")
-                            .font(.system(size: 8, weight: .medium))
-                            .foregroundStyle(.secondary)
-                    }
-                    .frame(maxWidth: 104, alignment: .trailing)
+                    countdown(context)
+                        .font(.system(size: 28, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(timerAccent)
+                        .minimumScaleFactor(0.68)
+                        .lineLimit(1)
+                        .frame(maxWidth: 120, alignment: .trailing)
                 }
 
                 DynamicIslandExpandedRegion(.bottom) {
-                    VStack(alignment: .leading, spacing: 6) {
-                        VStack(alignment: .leading, spacing: 1) {
-                            Text(statusLabel(context))
-                                .font(.system(size: 10, weight: .semibold))
-                                .foregroundStyle(accent)
-                            Text(blockTitle(context))
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundStyle(.white)
-                                .lineLimit(1)
-                                .truncationMode(.tail)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-
-                        progress(context)
-                            .labelsHidden()
-                            .progressViewStyle(.linear)
-                            .tint(accent)
-                            .scaleEffect(y: 0.5)
-                            .frame(height: 2)
-
-                        HStack(alignment: .center, spacing: 12) {
-                            VStack(alignment: .leading, spacing: 0) {
-                                elapsed(context)
-                                    .font(.system(size: 12, weight: .semibold, design: .monospaced))
-                                    .foregroundStyle(.white.opacity(0.9))
-                                Text(context.isStale ? "DURATION" : "ELAPSED")
-                                    .font(.system(size: 7, weight: .medium))
-                                    .foregroundStyle(.secondary)
-                            }
-                            .lineLimit(1)
-                            Spacer(minLength: 6)
-                            dynamicIslandActions(context)
-                        }
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                    metricGrid(context)
+                        .padding(.top, 12)
                 }
             } compactLeading: {
-                activityIcon(context, size: 12)
-                    .frame(width: 16, height: 16)
+                activityIcon(context, size: 16)
+                    .frame(width: 20, height: 20)
                     .accessibilityLabel("\(blockTitle(context)), \(statusLabel(context))")
             } compactTrailing: {
                 compactTimer(context)
+                    .font(.system(size: 16, weight: .semibold, design: .monospaced))
+                    .foregroundStyle(timerAccent)
+                    .padding(.trailing, 8)
             } minimal: {
                 minimalContent(context)
             }
             .widgetURL(context.attributes.deepLink)
             .keylineTint(accent)
-            .contentMargins(.horizontal, 24, for: .expanded)
-            .contentMargins(.bottom, 24, for: .expanded)
+            .contentMargins(.horizontal, 20, for: .expanded)
+            .contentMargins(.bottom, 20, for: .expanded)
         }
     }
 
     private func lockScreen(_ context: ActivityViewContext<BlockActivityAttributes>) -> some View {
-        VStack(spacing: 7) {
-            HStack(alignment: .center, spacing: 8) {
-                activityIcon(context, size: 16)
-                    .frame(width: 22, height: 22)
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(statusLabel(context))
-                        .font(.system(size: 10, weight: .semibold))
-                        .foregroundStyle(accent)
-                    Text(blockTitle(context))
-                        .font(.system(size: 16, weight: .semibold))
-                        .lineLimit(1)
-                        .truncationMode(.tail)
-                }
-                Spacer(minLength: 8)
-                VStack(alignment: .trailing, spacing: 1) {
-                    countdown(context)
-                        .font(.system(size: 22, weight: .semibold, design: .monospaced))
-                        .minimumScaleFactor(0.75)
-                    Text(context.isStale ? "COMPLETE" : "REMAINING")
-                        .font(.system(size: 8, weight: .medium))
-                        .foregroundStyle(.secondary)
-                }
-                .frame(maxWidth: 110, alignment: .trailing)
-                .layoutPriority(1)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-
-            progress(context)
-                .labelsHidden()
-                .progressViewStyle(.linear)
-                .tint(accent)
-                .scaleEffect(y: 0.55)
-                .frame(height: 2)
-
+        VStack(spacing: 12) {
             HStack(alignment: .center, spacing: 12) {
-                VStack(alignment: .leading, spacing: 1) {
-                    HStack(spacing: 4) {
-                        elapsed(context)
-                            .font(.system(size: 12, weight: .semibold, design: .monospaced))
-                            .foregroundStyle(.white.opacity(0.9))
-                        Text(context.isStale ? "DURATION" : "ELAPSED")
-                            .font(.system(size: 7, weight: .medium))
-                            .foregroundStyle(.secondary)
-                    }
-                    Text(lockScreenTimeLabel(context))
-                        .font(.system(size: 9, weight: .medium))
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                }
-                Spacer(minLength: 6)
+                activityIcon(context, size: 24)
+                    .frame(width: 30, height: 30)
+                Spacer(minLength: 8)
+                countdown(context)
+                    .font(.system(size: 32, weight: .medium, design: .monospaced))
+                    .foregroundStyle(timerAccent)
+                    .minimumScaleFactor(0.68)
+                    .lineLimit(1)
+                    .layoutPriority(1)
+                Spacer(minLength: 8)
                 activityActions(context)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+
+            Divider()
+                .overlay(.white.opacity(0.12))
+
+            metricGrid(context)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 14)
-        .padding(.vertical, 14)
+        .padding(16)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(blockTitle(context))
     }
 
-    @ViewBuilder
     private func activityActions(_ context: ActivityViewContext<BlockActivityAttributes>) -> some View {
-        if !context.isStale {
-            Button(intent: SetBlockPausedIntent(
-                blockID: context.attributes.blockID,
-                dateKey: context.attributes.dateKey,
-                paused: !context.state.isPaused
-            )) {
-                Label(
-                    context.state.isPaused ? "Resume" : "Pause",
-                    systemImage: context.state.isPaused ? "play.fill" : "pause.fill"
-                )
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(.white)
-                .padding(.horizontal, 12)
-                .frame(height: 44)
-                .background(accent)
-                .clipShape(Capsule())
-            }
-            .buttonStyle(.plain)
+        activityControls(context, buttonSize: 40)
+    }
 
-            Button(intent: EndBlockIntent(
-                blockID: context.attributes.blockID,
-                dateKey: context.attributes.dateKey
-            )) {
-                Label("End", systemImage: "stop.fill")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(.white.opacity(0.9))
-                    .padding(.horizontal, 12)
-                    .frame(height: 44)
-                    .background(.white.opacity(0.12))
-                    .clipShape(Capsule())
-                    .overlay {
-                        Capsule().stroke(.white.opacity(0.16))
-                    }
-            }
-            .buttonStyle(.plain)
-        }
+    private func dynamicIslandActions(_ context: ActivityViewContext<BlockActivityAttributes>) -> some View {
+        activityControls(context, buttonSize: 36)
     }
 
     @ViewBuilder
-    private func dynamicIslandActions(_ context: ActivityViewContext<BlockActivityAttributes>) -> some View {
+    private func activityControls(
+        _ context: ActivityViewContext<BlockActivityAttributes>,
+        buttonSize: CGFloat
+    ) -> some View {
         if !context.isStale {
-            Button(intent: SetBlockPausedIntent(
-                blockID: context.attributes.blockID,
-                dateKey: context.attributes.dateKey,
-                paused: !context.state.isPaused
-            )) {
-                Label(
-                    context.state.isPaused ? "Resume" : "Pause",
-                    systemImage: context.state.isPaused ? "play.fill" : "pause.fill"
-                )
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(.white)
-                .padding(.horizontal, 12)
-                .frame(height: 44)
-                .background(accent)
-                .clipShape(Capsule())
-            }
-            .buttonStyle(.plain)
+            HStack(spacing: 8) {
+                Button(intent: SetBlockPausedIntent(
+                    blockID: context.attributes.blockID,
+                    dateKey: context.attributes.dateKey,
+                    paused: !context.state.isPaused
+                )) {
+                    Image(systemName: context.state.isPaused ? "play.fill" : "pause.fill")
+                        .font(.system(size: buttonSize * 0.36, weight: .bold))
+                        .foregroundStyle(.white)
+                        .frame(width: buttonSize, height: buttonSize)
+                        .background(Circle().fill(accent.opacity(0.30)))
+                        .overlay {
+                            Circle().stroke(accent.opacity(0.45))
+                        }
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(context.state.isPaused ? "Resume" : "Pause")
 
-            Button(intent: EndBlockIntent(
-                blockID: context.attributes.blockID,
-                dateKey: context.attributes.dateKey
-            )) {
-                Label("End", systemImage: "stop.fill")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(.white.opacity(0.9))
-                    .padding(.horizontal, 12)
-                    .frame(height: 44)
-                    .background(.white.opacity(0.12))
-                    .clipShape(Capsule())
-                    .overlay {
-                        Capsule().stroke(.white.opacity(0.16))
-                    }
+                Button(intent: EndBlockIntent(
+                    blockID: context.attributes.blockID,
+                    dateKey: context.attributes.dateKey
+                )) {
+                    Image(systemName: "stop.fill")
+                        .font(.system(size: buttonSize * 0.32, weight: .bold))
+                        .foregroundStyle(.white.opacity(0.9))
+                        .frame(width: buttonSize, height: buttonSize)
+                        .background(Circle().fill(.white.opacity(0.10)))
+                        .overlay {
+                            Circle().stroke(.white.opacity(0.16))
+                        }
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("End block")
             }
-            .buttonStyle(.plain)
         }
     }
 
     private func compactTimer(_ context: ActivityViewContext<BlockActivityAttributes>) -> some View {
         countdown(context)
-            .font(.system(size: 12, weight: .semibold, design: .monospaced))
-            .minimumScaleFactor(0.72)
+            .minimumScaleFactor(0.68)
             .lineLimit(1)
-            .foregroundStyle(accent)
             .accessibilityLabel("Time remaining")
     }
 
     @ViewBuilder
     private func minimalContent(_ context: ActivityViewContext<BlockActivityAttributes>) -> some View {
-        activityIcon(context, size: 12)
-            .frame(width: 16, height: 16)
+        activityIcon(context, size: 16)
+            .frame(width: 20, height: 20)
+    }
+
+    private func metricGrid(_ context: ActivityViewContext<BlockActivityAttributes>) -> some View {
+        HStack(alignment: .top, spacing: 8) {
+            metric(label: context.isStale ? "DURATION" : "ELAPSED") {
+                elapsed(context)
+            }
+            metric(label: "START") {
+                Text(context.state.startDate, style: .time)
+            }
+            metric(label: "END") {
+                Text(context.state.endDate, style: .time)
+            }
+            metric(label: "STATUS") {
+                Text(statusLabel(context))
+            }
+        }
+    }
+
+    private func metric<Content: View>(
+        label: String,
+        @ViewBuilder value: () -> Content
+    ) -> some View {
+        VStack(spacing: 3) {
+            value()
+                .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                .foregroundStyle(.white)
+                .minimumScaleFactor(0.68)
+                .lineLimit(1)
+            Text(label)
+                .font(.system(size: 7, weight: .medium))
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.72)
+        }
+        .frame(maxWidth: .infinity)
     }
 
     @ViewBuilder
@@ -272,20 +210,6 @@ struct BlockLiveActivityWidget: Widget {
     }
 
     @ViewBuilder
-    private func progress(_ context: ActivityViewContext<BlockActivityAttributes>) -> some View {
-        if context.isStale {
-            ProgressView(value: 1)
-        } else if let pausedAt = context.state.pausedAt {
-            ProgressView(value: progressValue(at: pausedAt, context: context))
-        } else {
-            ProgressView(
-                timerInterval: context.state.startDate...context.state.endDate,
-                countsDown: false
-            )
-        }
-    }
-
-    @ViewBuilder
     private func activityIcon(
         _ context: ActivityViewContext<BlockActivityAttributes>,
         size: CGFloat
@@ -295,13 +219,19 @@ struct BlockLiveActivityWidget: Widget {
                 .font(.system(size: size, weight: .semibold))
                 .foregroundStyle(accent)
                 .accessibilityLabel("Block ended")
+        } else if context.state.isPaused {
+            Image(systemName: "pause.circle.fill")
+                .font(.system(size: size, weight: .semibold))
+                .foregroundStyle(.white.opacity(0.72))
+                .contentTransition(.symbolEffect(.replace))
+                .accessibilityLabel("Block paused")
         } else {
-            flame(size: size, isActive: !context.state.isPaused)
+            Image(systemName: "clock.fill")
+                .font(.system(size: size, weight: .semibold))
+                .foregroundStyle(accent)
+                .contentTransition(.symbolEffect(.replace))
+                .accessibilityLabel("Block running")
         }
-    }
-
-    private func flame(size: CGFloat, isActive: Bool) -> some View {
-        FlameIcon(size: size, isActive: isActive)
     }
 
     private func statusLabel(_ context: ActivityViewContext<BlockActivityAttributes>) -> String {
@@ -314,20 +244,6 @@ struct BlockLiveActivityWidget: Widget {
         context.isStale ? "Block complete" : context.state.blockName
     }
 
-    private func lockScreenTimeLabel(_ context: ActivityViewContext<BlockActivityAttributes>) -> String {
-        if context.isStale { return "Completed" }
-        if context.state.isPaused { return "Paused · \(context.state.timeLabel)" }
-        return context.state.timeLabel
-    }
-
-    private func progressValue(
-        at date: Date,
-        context: ActivityViewContext<BlockActivityAttributes>
-    ) -> Double {
-        let duration = max(1, context.state.endDate.timeIntervalSince(context.state.startDate))
-        return max(0, min(1, date.timeIntervalSince(context.state.startDate) / duration))
-    }
-
     private func formattedDuration(_ interval: TimeInterval) -> String {
         let totalSeconds = max(0, Int(interval))
         let hours = totalSeconds / 3_600
@@ -337,32 +253,6 @@ struct BlockLiveActivityWidget: Widget {
             return String(format: "%d:%02d:%02d", hours, minutes, seconds)
         }
         return String(format: "%02d:%02d", minutes, seconds)
-    }
-}
-
-private struct FlameIcon: View {
-    @Environment(\.isLuminanceReduced) private var isLuminanceReduced
-
-    let size: CGFloat
-    let isActive: Bool
-
-    var body: some View {
-        Image(systemName: "flame.fill")
-            .font(.system(size: size, weight: .semibold))
-            .foregroundStyle(
-                LinearGradient(
-                    colors: [.yellow, .orange, .red],
-                    startPoint: .bottom,
-                    endPoint: .top
-                )
-            )
-            .symbolEffect(
-                .variableColor.iterative,
-                options: .repeating.speed(0.68),
-                isActive: isActive && !isLuminanceReduced
-            )
-            .contentTransition(.symbolEffect(.replace))
-            .accessibilityLabel(isActive ? "Block running" : "Block paused")
     }
 }
 
