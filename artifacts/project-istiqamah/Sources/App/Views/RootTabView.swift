@@ -35,8 +35,8 @@ struct RootTabView: View {
         .tint(AppTheme.primary)
         .toolbarBackground(AppTheme.surface, for: .tabBar)
         .toolbarBackground(.visible, for: .tabBar)
-        .onReceive(router.$route.compactMap { $0 }) { _ in
-            selection = .today
+        .onReceive(router.$route.compactMap { $0 }) { route in
+            selection = route.destination == .progress ? .progress : .today
         }
     }
 }

@@ -15,12 +15,55 @@ final class DateToolsTests: XCTestCase {
         let preferences = try JSONDecoder().decode(AppPreferences.self, from: json)
 
         XCTAssertEqual(preferences.snoozeMinutes, 5)
+        XCTAssertEqual(preferences.widgetMessage, "Keep showing up.")
+        XCTAssertNil(preferences.customReminderSoundFileName)
     }
 
     func testSnoozeDelayIsClampedToSupportedRange() {
         XCTAssertEqual(AppPreferences(snoozeMinutes: 1).snoozeMinutes, 5)
         XCTAssertEqual(AppPreferences(snoozeMinutes: 8).snoozeMinutes, 10)
         XCTAssertEqual(AppPreferences(snoozeMinutes: 30).snoozeMinutes, 15)
+    }
+
+    func testCustomSoundRequiresSafeCAFFileName() {
+        let invalid = AppPreferences(
+            reminderSound: .custom,
+            customReminderSoundFileName: "../ringtone.m4r"
+        )
+        let valid = AppPreferences(
+            reminderSound: .custom,
+            customReminderSoundFileName: "istiqamah-custom.caf",
+            customReminderSoundDisplayName: "My tone"
+        )
+
+        XCTAssertEqual(invalid.reminderSound, .system)
+        XCTAssertNil(invalid.customReminderSoundFileName)
+        XCTAssertEqual(valid.reminderSound, .custom)
+        XCTAssertEqual(valid.notificationSoundFileName, "istiqamah-custom.caf")
+    }
+
+    func testWidgetMessageIsSingleLineAndLengthBounded() {
+        let value = "first line\n" + String(repeating: "a", count: 90)
+        let normalized = AppPreferences.normalizedWidgetMessage(value)
+
+        XCTAssertEqual(normalized.count, 80)
+        XCTAssertFalse(normalized.contains("\n"))
+    }
+
+    func testWidgetSnapshotRoundTrips() throws {
+        let snapshot = IstiqamahWidgetSnapshot.placeholder
+        let restored = try JSONDecoder().decode(
+            IstiqamahWidgetSnapshot.self,
+            from: JSONEncoder().encode(snapshot)
+        )
+
+        XCTAssertEqual(restored, snapshot)
+    }
+
+    func testProgressWidgetDeepLinkSelectsProgressDestination() throws {
+        let url = try XCTUnwrap(URL(string: "project-istiqamah://progress"))
+
+        XCTAssertEqual(AppRoute(url: url).destination, .progress)
     }
 
     func testLegacyBlockDecodesWithEveryDaySchedule() throws {

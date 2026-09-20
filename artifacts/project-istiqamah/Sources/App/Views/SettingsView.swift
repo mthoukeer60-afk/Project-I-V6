@@ -8,7 +8,9 @@ struct SettingsView: View {
     @Environment(\.openURL) private var openURL
     @State private var backupURL: URL?
     @State private var backupError: String?
+    @State private var soundImportError: String?
     @State private var showingBackupImporter = false
+    @State private var showingSoundImporter = false
     @State private var confirmingBackupRestore = false
     @State private var notificationStatus = "Checking…"
     @State private var backgroundRefreshStatus = "Checking…"
@@ -31,8 +33,8 @@ struct SettingsView: View {
                         }
                     }
                     Picker("Reminder sound", selection: reminderSoundBinding) {
-                        ForEach(ReminderSound.allCases) { sound in
-                            Text(sound.title).tag(sound)
+                        ForEach(availableReminderSounds) { sound in
+                            Text(reminderSoundTitle(sound)).tag(sound)
                         }
                     }
                 }
@@ -48,6 +50,9 @@ struct SettingsView: View {
                         .font(.caption)
                         .foregroundStyle(AppTheme.secondaryText)
                     Text("iOS chooses when background refresh runs, so notifications remain the reliable fallback for exact block times.")
+                        .font(.caption)
+                        .foregroundStyle(AppTheme.secondaryText)
+                    Text("The Dynamic Island stays compact while a block is active and expands on touch and hold. iOS controls when that compact presentation is shown or hidden.")
                         .font(.caption)
                         .foregroundStyle(AppTheme.secondaryText)
                     Button("Refresh Live Activities") {
@@ -68,11 +73,43 @@ struct SettingsView: View {
                     Button("Send test reminder", systemImage: "speaker.wave.2") {
                         store.sendTestReminder()
                     }
+                    Button("Import short sound", systemImage: "music.note") {
+                        showingSoundImporter = true
+                    }
+                    if let customName = store.preferences.customReminderSoundDisplayName {
+                        LabeledContent("Imported sound", value: customName)
+                    }
+                    Text("Apple doesn't expose its full tone library to apps. Choose the system notification, the system ringtone on iOS 26, an included tone, or import audio up to 30 seconds. Imported files are converted to notification-safe CAF audio.")
+                        .font(.caption)
+                        .foregroundStyle(AppTheme.secondaryText)
                     if let notificationTestStatus = store.notificationTestStatus {
                         Text(notificationTestStatus)
                             .font(.caption)
                             .foregroundStyle(AppTheme.secondaryText)
                     }
+                    if let soundImportStatus = store.soundImportStatus {
+                        Text(soundImportStatus)
+                            .font(.caption)
+                            .foregroundStyle(AppTheme.secondaryText)
+                    }
+                    if let soundImportError {
+                        Text(soundImportError)
+                            .font(.caption)
+                            .foregroundStyle(AppTheme.error)
+                    }
+                }
+
+                Section("Widgets") {
+                    TextField(
+                        "Personal widget message",
+                        text: widgetMessageBinding,
+                        axis: .vertical
+                    )
+                    .lineLimit(2...3)
+                    LabeledContent("Widget data", value: store.widgetSyncStatus)
+                    Text("Add Focus or Consistency from the widget gallery. Both support Home Screen and Lock Screen sizes, and can be customized by touching and holding the widget, then choosing Edit Widget. A Lock Screen widget can appear alongside the running Live Activity.")
+                        .font(.caption)
+                        .foregroundStyle(AppTheme.secondaryText)
                 }
 
                 Section("Your data") {
@@ -133,12 +170,30 @@ struct SettingsView: View {
                 Text("Restoring replaces the current blocks, history, and preferences after the file passes validation.")
             }
             .fileImporter(
+                isPresented: $showingSoundImporter,
+                allowedContentTypes: [.audio],
+                allowsMultipleSelection: false
+            ) { result in
+                importSound(result)
+            }
+            .fileImporter(
                 isPresented: $showingBackupImporter,
                 allowedContentTypes: [.json],
                 allowsMultipleSelection: false
             ) { result in
                 restoreBackup(result)
             }
+        }
+    }
+
+    private func importSound(_ result: Result<[URL], Error>) {
+        switch result {
+        case let .success(urls):
+            guard let url = urls.first else { return }
+            soundImportError = nil
+            store.importCustomReminderSound(from: url)
+        case let .failure(error):
+            soundImportError = "Sound import failed: \(error.localizedDescription)"
         }
     }
 
@@ -178,6 +233,38 @@ struct SettingsView: View {
             get: { store.preferences.reminderSound },
             set: { value in store.updatePreferences { $0.reminderSound = value } }
         )
+    }
+
+    private var widgetMessageBinding: Binding<String> {
+        Binding(
+            get: { store.preferences.widgetMessage },
+            set: { value in
+                store.updatePreferences {
+                    $0.widgetMessage = AppPreferences.normalizedWidgetMessage(value)
+                }
+            }
+        )
+    }
+
+    private var availableReminderSounds: [ReminderSound] {
+        ReminderSound.allCases.filter { sound in
+            if sound == .custom {
+                return store.preferences.customReminderSoundFileName != nil
+            }
+            if sound == .systemRingtone {
+                if #available(iOS 26.0, *) { return true }
+                return false
+            }
+            return true
+        }
+    }
+
+    private func reminderSoundTitle(_ sound: ReminderSound) -> String {
+        if sound == .custom,
+           let customName = store.preferences.customReminderSoundDisplayName {
+            return customName
+        }
+        return sound.title
     }
 
     private var snoozeBinding: Binding<Int> {

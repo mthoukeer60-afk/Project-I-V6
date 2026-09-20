@@ -13,6 +13,7 @@ actor LiveActivityManager {
     func sync(
         blocks: [FocusBlock],
         pausedBlocks: [String: Date] = [:],
+        alertSoundFileName: String? = nil,
         now: Date = Date()
     ) async -> LiveActivityReport? {
         syncGeneration &+= 1
@@ -20,6 +21,7 @@ actor LiveActivityManager {
         return await synchronize(
             blocks: blocks,
             pausedBlocks: pausedBlocks,
+            alertSoundFileName: alertSoundFileName,
             now: now,
             generation: generation
         )
@@ -28,6 +30,7 @@ actor LiveActivityManager {
     private func synchronize(
         blocks: [FocusBlock],
         pausedBlocks: [String: Date],
+        alertSoundFileName: String?,
         now: Date,
         generation: Int
     ) async -> LiveActivityReport? {
@@ -104,7 +107,11 @@ actor LiveActivityManager {
         guard generation == syncGeneration else { return nil }
         var schedulingError: String?
         if #available(iOS 26.0, *) {
-            schedulingError = scheduleUpcoming(blocks: blocks, now: now)
+            schedulingError = scheduleUpcoming(
+                blocks: blocks,
+                alertSoundFileName: alertSoundFileName,
+                now: now
+            )
         }
 
         let activities = Activity<BlockActivityAttributes>.activities
@@ -143,6 +150,7 @@ actor LiveActivityManager {
     func restart(
         blocks: [FocusBlock],
         pausedBlocks: [String: Date] = [:],
+        alertSoundFileName: String? = nil,
         now: Date = Date()
     ) async -> LiveActivityReport? {
         syncGeneration &+= 1
@@ -157,6 +165,7 @@ actor LiveActivityManager {
         return await synchronize(
             blocks: blocks,
             pausedBlocks: pausedBlocks,
+            alertSoundFileName: alertSoundFileName,
             now: now,
             generation: generation
         )
@@ -206,7 +215,11 @@ actor LiveActivityManager {
     }
 
     @available(iOS 26.0, *)
-    private func scheduleUpcoming(blocks: [FocusBlock], now: Date) -> String? {
+    private func scheduleUpcoming(
+        blocks: [FocusBlock],
+        alertSoundFileName: String?,
+        now: Date
+    ) -> String? {
         let activities = Activity<BlockActivityAttributes>.activities
         let existingKeys = Set(activities.map {
             "\($0.attributes.blockID.uuidString):\($0.attributes.dateKey)"
@@ -224,10 +237,16 @@ actor LiveActivityManager {
             .prefix(availableSlots)
 
         for item in candidates {
+            let alertSound: AlertConfiguration.AlertSound
+            if let alertSoundFileName {
+                alertSound = .named(alertSoundFileName)
+            } else {
+                alertSound = .default
+            }
             let alert = AlertConfiguration(
                 title: "\(item.block.name) is starting",
                 body: "Your focus block is now live.",
-                sound: .default
+                sound: alertSound
             )
             do {
                 _ = try Activity.request(

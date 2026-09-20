@@ -1,7 +1,13 @@
 import Combine
 import Foundation
 
+enum AppRouteDestination: Equatable {
+    case today
+    case progress
+}
+
 struct AppRoute: Equatable {
+    let destination: AppRouteDestination
     let blockID: UUID?
     let dateKey: String?
     let action: String?
@@ -11,12 +17,14 @@ struct AppRoute: Equatable {
         let pathID = url.pathComponents.last.flatMap(UUID.init(uuidString:))
         let taskID = components?.queryItems?.first(where: { $0.name == "taskId" })?.value
             .flatMap(UUID.init(uuidString:))
+        destination = url.host == "progress" ? .progress : .today
         blockID = pathID ?? taskID
         dateKey = components?.queryItems?.first(where: { $0.name == "date" })?.value
         action = components?.queryItems?.first(where: { $0.name == "action" })?.value
     }
 
     init(blockID: UUID?, dateKey: String?, action: String?) {
+        destination = .today
         self.blockID = blockID
         self.dateKey = dateKey
         self.action = action

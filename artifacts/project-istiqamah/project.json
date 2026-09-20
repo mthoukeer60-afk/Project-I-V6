@@ -57,6 +57,7 @@
       },
       "settings": {
         "base": {
+          "CODE_SIGN_ENTITLEMENTS": "Config/ProjectIstiqamah.entitlements",
           "PRODUCT_BUNDLE_IDENTIFIER": "com.projectistiqamah.app",
           "PRODUCT_NAME": "ProjectIstiqamah",
           "TARGETED_DEVICE_FAMILY": "1"
@@ -69,12 +70,13 @@
       "sources": [
         { "path": "Sources/Widgets" },
         { "path": "Sources/Shared/BlockActivityAttributes.swift" },
-        { "path": "Sources/Shared/BlockLiveActivityIntents.swift" }
+        { "path": "Sources/Shared/BlockLiveActivityIntents.swift" },
+        { "path": "Sources/Shared/WidgetSharedData.swift" }
       ],
       "info": {
         "path": "Config/WidgetInfo.plist",
         "properties": {
-          "CFBundleDisplayName": "Project Istiqamah Live Activity",
+          "CFBundleDisplayName": "Project Istiqamah Widgets",
           "NSExtension": {
             "NSExtensionPointIdentifier": "com.apple.widgetkit-extension"
           }
@@ -82,6 +84,7 @@
       },
       "settings": {
         "base": {
+          "CODE_SIGN_ENTITLEMENTS": "Config/ProjectIstiqamahWidgets.entitlements",
           "PRODUCT_BUNDLE_IDENTIFIER": "com.projectistiqamah.app.widgets",
           "PRODUCT_NAME": "ProjectIstiqamahWidgets",
           "SKIP_INSTALL": true,

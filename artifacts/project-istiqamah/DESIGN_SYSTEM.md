@@ -46,3 +46,10 @@ hex value. Light and dark variants resolve automatically from the system appeara
 `assets/images/icon.png` is a full-bleed 1024 × 1024 RGB PNG. It uses the same
 deep green, mint, graphite, and warm-white identity as the interface. Keep the
 source square and unmasked; iOS applies the device-appropriate icon shape.
+
+## Widget mark
+
+`Sources/Widgets/IstiqamahMark.swift` recreates the icon's abstract `i` as
+native SwiftUI paths. Use this compact mark in Dynamic Island and widget
+contexts where the full glass app-icon artwork would lose clarity. It inherits
+the semantic primary and mint colors and remains crisp in tinted widget modes.

@@ -51,7 +51,7 @@ actor NotificationManager {
         let content = UNMutableNotificationContent()
         content.title = "Project Istiqamah"
         content.body = "This is how your block reminders will sound."
-        content.sound = notificationSound(for: preferences.reminderSound)
+        content.sound = notificationSound(for: preferences)
         content.interruptionLevel = .timeSensitive
 
         let request = UNNotificationRequest(
@@ -140,14 +140,12 @@ actor NotificationManager {
                 let content = UNMutableNotificationContent()
                 content.title = alert.title
                 content.body = alert.body
-                content.sound = alert.kind == "start"
-                    ? blockStartSound(for: preferences.reminderSound)
-                    : notificationSound(for: preferences.reminderSound)
+                content.sound = notificationSound(for: preferences)
                 content.interruptionLevel = .timeSensitive
                 if alert.kind == "start" {
                     content.categoryIdentifier = Self.blockStartCategoryIdentifier
                 }
-                content.userInfo = [
+                var userInfo: [String: Any] = [
                     "blockID": item.block.id.uuidString,
                     "blockName": item.block.name,
                     "blockEnd": item.end.timeIntervalSince1970,
@@ -156,6 +154,10 @@ actor NotificationManager {
                     "snoozeMinutes": preferences.snoozeMinutes,
                     "reminderSound": preferences.reminderSound.rawValue
                 ]
+                if let customSoundFileName = preferences.customReminderSoundFileName {
+                    userInfo["customReminderSoundFileName"] = customSoundFileName
+                }
+                content.userInfo = userInfo
                 let components = Calendar.current.dateComponents(
                     [.year, .month, .day, .hour, .minute, .second],
                     from: alert.date
@@ -201,7 +203,8 @@ actor NotificationManager {
         blockEnd: Date?,
         dateKey: String?,
         minutes: Int,
-        sound: ReminderSound
+        sound: ReminderSound,
+        customSoundFileName: String?
     ) async -> Bool {
         let delay = AppPreferences.normalizedSnoozeMinutes(minutes)
         let fireDate = Date().addingTimeInterval(TimeInterval(delay * 60))
@@ -212,7 +215,10 @@ actor NotificationManager {
         let content = UNMutableNotificationContent()
         content.title = "\(blockName) is starting now"
         content.body = "Snoozed for \(delay) minutes. Tap I Know when you're ready to focus."
-        content.sound = blockStartSound(for: sound)
+        content.sound = notificationSound(
+            for: sound,
+            customSoundFileName: customSoundFileName
+        )
         content.interruptionLevel = .timeSensitive
         content.categoryIdentifier = Self.blockStartCategoryIdentifier
         var userInfo: [String: Any] = [
@@ -221,6 +227,9 @@ actor NotificationManager {
             "snoozeMinutes": delay,
             "reminderSound": sound.rawValue
         ]
+        if let customSoundFileName = AppPreferences.safeSoundFileName(customSoundFileName) {
+            userInfo["customReminderSoundFileName"] = customSoundFileName
+        }
         if let blockID {
             userInfo["blockID"] = blockID.uuidString
         }
@@ -248,15 +257,24 @@ actor NotificationManager {
         }
     }
 
-    private func notificationSound(for selection: ReminderSound) -> UNNotificationSound {
-        guard let fileName = selection.fileName else { return .default }
-        return UNNotificationSound(named: UNNotificationSoundName(rawValue: fileName))
+    private func notificationSound(for preferences: AppPreferences) -> UNNotificationSound {
+        notificationSound(
+            for: preferences.reminderSound,
+            customSoundFileName: preferences.customReminderSoundFileName
+        )
     }
 
-    private func blockStartSound(for selection: ReminderSound) -> UNNotificationSound {
-        if #available(iOS 26.0, *), selection == .system {
+    private func notificationSound(
+        for selection: ReminderSound,
+        customSoundFileName: String?
+    ) -> UNNotificationSound {
+        if #available(iOS 26.0, *), selection == .systemRingtone {
             return .defaultRingtone
         }
-        return notificationSound(for: selection)
+        let fileName = selection == .custom
+            ? AppPreferences.safeSoundFileName(customSoundFileName)
+            : selection.fileName
+        guard let fileName else { return .default }
+        return UNNotificationSound(named: UNNotificationSoundName(rawValue: fileName))
     }
 }

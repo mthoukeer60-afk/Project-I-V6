@@ -47,6 +47,9 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
             let minutes = (data["snoozeMinutes"] as? NSNumber)?.intValue ?? 5
             let sound = (data["reminderSound"] as? String)
                 .flatMap(ReminderSound.init(rawValue:)) ?? .system
+            let customSoundFileName = AppPreferences.safeSoundFileName(
+                data["customReminderSoundFileName"] as? String
+            )
             Task {
                 await NotificationManager.shared.snoozeBlockStart(
                     blockID: blockID,
@@ -54,7 +57,8 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
                     blockEnd: blockEnd,
                     dateKey: dateKey,
                     minutes: minutes,
-                    sound: sound
+                    sound: sound,
+                    customSoundFileName: customSoundFileName
                 )
                 completionHandler()
             }

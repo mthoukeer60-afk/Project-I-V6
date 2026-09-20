@@ -45,7 +45,8 @@ final class BackgroundRefreshManager {
                 )
                 async let activitySync = LiveActivityManager.shared.sync(
                     blocks: snapshot.blocks,
-                    pausedBlocks: snapshot.pausedBlocks ?? [:]
+                    pausedBlocks: snapshot.pausedBlocks ?? [:],
+                    alertSoundFileName: snapshot.preferences.notificationSoundFileName
                 )
                 _ = await activitySync
                 _ = await notificationSync

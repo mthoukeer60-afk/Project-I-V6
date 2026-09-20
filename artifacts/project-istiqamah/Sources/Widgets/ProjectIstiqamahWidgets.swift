@@ -5,5 +5,7 @@ import WidgetKit
 struct ProjectIstiqamahWidgets: WidgetBundle {
     var body: some Widget {
         BlockLiveActivityWidget()
+        IstiqamahFocusWidget()
+        IstiqamahConsistencyWidget()
     }
 }

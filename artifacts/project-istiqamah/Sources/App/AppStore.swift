@@ -1,6 +1,7 @@
 import Combine
 import Foundation
 import UIKit
+import WidgetKit
 
 @MainActor
 final class AppStore: ObservableObject {
@@ -12,6 +13,8 @@ final class AppStore: ObservableObject {
     @Published private(set) var notificationSyncStatus = "Not synced yet"
     @Published private(set) var backgroundScheduleStatus = "Not scheduled yet"
     @Published private(set) var notificationTestStatus: String?
+    @Published private(set) var soundImportStatus: String?
+    @Published private(set) var widgetSyncStatus = "Preparing…"
     @Published private(set) var storageStatus = "Ready"
     @Published private(set) var timelineDate = Date()
 
@@ -169,7 +172,30 @@ final class AppStore: ObservableObject {
         update(&preferences)
         preferences.reminderMinutes = min(15, max(5, preferences.reminderMinutes))
         preferences.snoozeMinutes = AppPreferences.normalizedSnoozeMinutes(preferences.snoozeMinutes)
+        preferences.widgetMessage = AppPreferences.normalizedWidgetMessage(preferences.widgetMessage)
+        if preferences.reminderSound == .custom,
+           AppPreferences.safeSoundFileName(preferences.customReminderSoundFileName) == nil {
+            preferences.reminderSound = .system
+        }
         changed()
+    }
+
+    func importCustomReminderSound(from url: URL) {
+        soundImportStatus = "Importing and converting…"
+        Task { [weak self] in
+            do {
+                let imported = try await CustomNotificationSoundManager.importSound(from: url)
+                guard let self else { return }
+                self.updatePreferences {
+                    $0.customReminderSoundFileName = imported.fileName
+                    $0.customReminderSoundDisplayName = imported.displayName
+                    $0.reminderSound = .custom
+                }
+                self.soundImportStatus = "Using \(imported.displayName)"
+            } catch {
+                self?.soundImportStatus = "Import failed: \(error.localizedDescription)"
+            }
+        }
     }
 
     func selectDate(_ date: Date) {
@@ -280,6 +306,7 @@ final class AppStore: ObservableObject {
         clearExpiredRoute(at: now)
         timelineDate = now
         prunePausedBlocks(at: now)
+        publishWidgetSnapshot(at: now)
         scheduleNextTransition(after: now)
         let currentBlocks = activeBlocks
         let currentPausedBlocks = pausedBlocks
@@ -295,6 +322,7 @@ final class AppStore: ObservableObject {
             let activityReport = await LiveActivityManager.shared.sync(
                 blocks: currentBlocks,
                 pausedBlocks: currentPausedBlocks,
+                alertSoundFileName: currentPreferences.notificationSoundFileName,
                 now: now
             )
             guard let self, generation == self.refreshGeneration else { return }
@@ -315,13 +343,15 @@ final class AppStore: ObservableObject {
     func restartLiveActivity() {
         let currentBlocks = activeBlocks
         let currentPausedBlocks = pausedBlocks
+        let alertSoundFileName = preferences.notificationSoundFileName
         liveActivityStatus = "Restarting…"
         refreshGeneration &+= 1
         let generation = refreshGeneration
         Task { [weak self] in
             let report = await LiveActivityManager.shared.restart(
                 blocks: currentBlocks,
-                pausedBlocks: currentPausedBlocks
+                pausedBlocks: currentPausedBlocks,
+                alertSoundFileName: alertSoundFileName
             )
             guard let self, let report, generation == self.refreshGeneration else { return }
             self.liveActivityStatus = report.message
@@ -461,6 +491,62 @@ final class AppStore: ObservableObject {
         } catch {
             storageStatus = "Save failed: \(error.localizedDescription)"
         }
+    }
+
+    private func publishWidgetSnapshot(at now: Date = Date()) {
+        let schedule = DateTools.schedule(for: activeBlocks, around: now, days: 2)
+        let available = schedule.filter {
+            !$0.block.completedDates.contains($0.dateKey)
+        }
+        let current = available.first { $0.start <= now && now < $0.end }
+        let next = available.first { $0.start > now }
+        let todayKey = DateTools.key(now)
+        let today = schedule.filter { $0.dateKey == todayKey }
+        let completedToday = today.filter {
+            $0.block.completedDates.contains(todayKey)
+        }.count
+
+        let snapshot = IstiqamahWidgetSnapshot(
+            updatedAt: now,
+            personalMessage: preferences.widgetMessage,
+            currentBlock: current.map(widgetSummary),
+            nextBlock: next.map(widgetSummary),
+            completedToday: completedToday,
+            totalToday: today.count,
+            currentStreak: currentStreak(at: now)
+        )
+        if IstiqamahWidgetStore.save(snapshot) {
+            widgetSyncStatus = "Updated"
+            WidgetCenter.shared.reloadTimelines(ofKind: IstiqamahWidgetStore.focusWidgetKind)
+            WidgetCenter.shared.reloadTimelines(ofKind: IstiqamahWidgetStore.consistencyWidgetKind)
+        } else {
+            widgetSyncStatus = "App Group unavailable"
+        }
+    }
+
+    private func widgetSummary(_ item: ScheduledBlock) -> WidgetBlockSummary {
+        WidgetBlockSummary(
+            id: item.block.id,
+            name: item.block.name,
+            dateKey: item.dateKey,
+            startDate: item.start,
+            endDate: item.end,
+            isPaused: pausedBlocks[item.id] != nil
+        )
+    }
+
+    private func currentStreak(at now: Date) -> Int {
+        let completedDates = Set(blocks.flatMap(\.completedDates))
+        var date = now
+        var streak = 0
+        while completedDates.contains(DateTools.key(date)) {
+            streak += 1
+            guard let previous = Calendar.current.date(byAdding: .day, value: -1, to: date) else {
+                break
+            }
+            date = previous
+        }
+        return streak
     }
 
     static func validateBackup(_ snapshot: AppSnapshot) throws {

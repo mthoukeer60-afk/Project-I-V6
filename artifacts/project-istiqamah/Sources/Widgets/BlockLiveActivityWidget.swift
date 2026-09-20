@@ -37,7 +37,7 @@ struct BlockLiveActivityWidget: Widget {
                         .padding(.top, 12)
                 }
             } compactLeading: {
-                activityIcon(context, size: 12)
+                IstiqamahMark()
                     .frame(width: 16, height: 16)
                     .accessibilityLabel("\(blockTitle(context)), \(statusLabel(context))")
             } compactTrailing: {
@@ -58,7 +58,7 @@ struct BlockLiveActivityWidget: Widget {
     private func lockScreen(_ context: ActivityViewContext<BlockActivityAttributes>) -> some View {
         VStack(spacing: 12) {
             HStack(alignment: .center, spacing: 12) {
-                activityIcon(context, size: 24)
+                IstiqamahMark()
                     .frame(width: 30, height: 30)
                 Spacer(minLength: 8)
                 countdown(context)
@@ -153,8 +153,9 @@ struct BlockLiveActivityWidget: Widget {
 
     @ViewBuilder
     private func minimalContent(_ context: ActivityViewContext<BlockActivityAttributes>) -> some View {
-        activityIcon(context, size: 12)
+        IstiqamahMark()
             .frame(width: 16, height: 16)
+            .accessibilityLabel("\(blockTitle(context)), \(statusLabel(context))")
     }
 
     private func metricGrid(_ context: ActivityViewContext<BlockActivityAttributes>) -> some View {
@@ -221,31 +222,6 @@ struct BlockLiveActivityWidget: Widget {
             Text(context.state.endDate, style: .timer)
                 .monospacedDigit()
                 .lineLimit(1)
-        }
-    }
-
-    @ViewBuilder
-    private func activityIcon(
-        _ context: ActivityViewContext<BlockActivityAttributes>,
-        size: CGFloat
-    ) -> some View {
-        if context.isStale {
-            Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: size, weight: .semibold))
-                .foregroundStyle(accent)
-                .accessibilityLabel("Block ended")
-        } else if context.state.isPaused {
-            Image(systemName: "pause.circle.fill")
-                .font(.system(size: size, weight: .semibold))
-                .foregroundStyle(secondaryText)
-                .contentTransition(.symbolEffect(.replace))
-                .accessibilityLabel("Block paused")
-        } else {
-            Image(systemName: "clock.fill")
-                .font(.system(size: size, weight: .semibold))
-                .foregroundStyle(accent)
-                .contentTransition(.symbolEffect(.replace))
-                .accessibilityLabel("Block running")
         }
     }
 

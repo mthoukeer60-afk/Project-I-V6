@@ -69,24 +69,28 @@ struct FocusBlock: Identifiable, Codable, Hashable {
 
 enum ReminderSound: String, CaseIterable, Codable, Identifiable, Sendable {
     case system
+    case systemRingtone
     case gentleChime
     case brightBell
     case focusPulse
+    case custom
 
     var id: String { rawValue }
 
     var title: String {
         switch self {
-        case .system: "System Default"
+        case .system: "System Notification"
+        case .systemRingtone: "System Ringtone"
         case .gentleChime: "Gentle Chime"
         case .brightBell: "Bright Bell"
         case .focusPulse: "Focus Pulse"
+        case .custom: "Imported Sound"
         }
     }
 
     var fileName: String? {
         switch self {
-        case .system: nil
+        case .system, .systemRingtone, .custom: nil
         case .gentleChime: "gentle-chime.wav"
         case .brightBell: "bright-bell.wav"
         case .focusPulse: "focus-pulse.wav"
@@ -102,6 +106,9 @@ struct AppPreferences: Codable, Equatable {
     var reminderMinutes = 5
     var snoozeMinutes = 5
     var reminderSound: ReminderSound = .system
+    var customReminderSoundFileName: String?
+    var customReminderSoundDisplayName: String?
+    var widgetMessage = "Keep showing up."
 
     private enum CodingKeys: String, CodingKey {
         case haptics
@@ -109,6 +116,9 @@ struct AppPreferences: Codable, Equatable {
         case reminderMinutes
         case snoozeMinutes
         case reminderSound
+        case customReminderSoundFileName
+        case customReminderSoundDisplayName
+        case widgetMessage
     }
 
     init(
@@ -116,13 +126,24 @@ struct AppPreferences: Codable, Equatable {
         reminders: Bool = true,
         reminderMinutes: Int = 5,
         snoozeMinutes: Int = 5,
-        reminderSound: ReminderSound = .system
+        reminderSound: ReminderSound = .system,
+        customReminderSoundFileName: String? = nil,
+        customReminderSoundDisplayName: String? = nil,
+        widgetMessage: String = "Keep showing up."
     ) {
         self.haptics = haptics
         self.reminders = reminders
         self.reminderMinutes = min(15, max(5, reminderMinutes))
         self.snoozeMinutes = Self.normalizedSnoozeMinutes(snoozeMinutes)
         self.reminderSound = reminderSound
+        self.customReminderSoundFileName = Self.safeSoundFileName(customReminderSoundFileName)
+        self.customReminderSoundDisplayName = Self.normalizedSoundDisplayName(
+            customReminderSoundDisplayName
+        )
+        self.widgetMessage = Self.normalizedWidgetMessage(widgetMessage)
+        if reminderSound == .custom, self.customReminderSoundFileName == nil {
+            self.reminderSound = .system
+        }
     }
 
     init(from decoder: Decoder) throws {
@@ -137,6 +158,18 @@ struct AppPreferences: Codable, Equatable {
             try values.decodeIfPresent(Int.self, forKey: .snoozeMinutes) ?? 5
         )
         reminderSound = try values.decodeIfPresent(ReminderSound.self, forKey: .reminderSound) ?? .system
+        customReminderSoundFileName = Self.safeSoundFileName(
+            try values.decodeIfPresent(String.self, forKey: .customReminderSoundFileName)
+        )
+        customReminderSoundDisplayName = Self.normalizedSoundDisplayName(
+            try values.decodeIfPresent(String.self, forKey: .customReminderSoundDisplayName)
+        )
+        widgetMessage = Self.normalizedWidgetMessage(
+            try values.decodeIfPresent(String.self, forKey: .widgetMessage) ?? "Keep showing up."
+        )
+        if reminderSound == .custom, customReminderSoundFileName == nil {
+            reminderSound = .system
+        }
     }
 
     static func normalizedSnoozeMinutes(_ minutes: Int) -> Int {
@@ -144,6 +177,32 @@ struct AppPreferences: Codable, Equatable {
         return snoozeOptions.min { first, second in
             abs(first - bounded) < abs(second - bounded)
         } ?? 5
+    }
+
+    static func normalizedWidgetMessage(_ message: String) -> String {
+        let cleaned = message.replacingOccurrences(of: "\n", with: " ")
+        return String(cleaned.prefix(80))
+    }
+
+    static func safeSoundFileName(_ fileName: String?) -> String? {
+        let allowed = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "-_."))
+        guard let fileName,
+              !fileName.isEmpty,
+              fileName == URL(fileURLWithPath: fileName).lastPathComponent,
+              fileName.rangeOfCharacter(from: allowed.inverted) == nil,
+              fileName.lowercased().hasSuffix(".caf") else { return nil }
+        return fileName
+    }
+
+    private static func normalizedSoundDisplayName(_ name: String?) -> String? {
+        guard let name else { return nil }
+        let cleaned = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !cleaned.isEmpty else { return nil }
+        return String(cleaned.prefix(50))
+    }
+
+    var notificationSoundFileName: String? {
+        reminderSound == .custom ? customReminderSoundFileName : reminderSound.fileName
     }
 }
 

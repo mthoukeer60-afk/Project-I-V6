@@ -31,7 +31,7 @@ Pause / Resume / End intents return actions to AppStore
 | File | Responsibility |
 | --- | --- |
 | `Sources/Widgets/BlockLiveActivityWidget.swift` | All Lock Screen and Dynamic Island visuals, sizing, metrics, buttons, and previews |
-| `Sources/Widgets/ProjectIstiqamahWidgets.swift` | Registers the Live Activity widget extension |
+| `Sources/Widgets/ProjectIstiqamahWidgets.swift` | Registers the Live Activity plus Focus and Consistency widgets |
 | `Sources/Shared/BlockActivityAttributes.swift` | Defines the block identity, content state, pause state, dates, and deep link |
 | `Sources/Shared/BlockLiveActivityIntents.swift` | Implements Pause/Resume and End button intents |
 | `Sources/App/Services/LiveActivityManager.swift` | Starts, updates, schedules, restarts, and dismisses Live Activities |
@@ -45,10 +45,10 @@ Pause / Resume / End intents return actions to AppStore
 There is one `BlockLiveActivityWidget`, with several system-selected
 presentations:
 
-| Presentation | Code to edit in `BlockLiveActivityWidget.swift` | Current Build #14 content |
+| Presentation | Code to edit in `BlockLiveActivityWidget.swift` | Current content |
 | --- | --- | --- |
 | Lock Screen/banner | `lockScreen(_:)` | Clock/pause/checkmark, large timer, circular Pause/Resume and End controls, divider, and metric grid |
-| Compact leading | `compactLeading` closure | Running clock, paused symbol, or completed checkmark |
+| Compact leading | `compactLeading` closure | Project Istiqamah's SwiftUI-drawn brand mark |
 | Compact trailing | `compactTrailing` and `compactTimer(_:)` | A live countdown capped at 48 points |
 | Minimal | `minimal` and `minimalContent(_:)` | Icon only; used when iOS is showing multiple Live Activities |
 | Expanded leading | `DynamicIslandExpandedRegion(.leading)` | Circular Pause/Resume and End controls |
@@ -58,7 +58,8 @@ presentations:
 iOS chooses compact, minimal, or expanded presentation. Normally one active
 Live Activity uses compact mode. A long press opens expanded mode. The app can
 change the content inside each region, but it cannot set the Dynamic Island's
-outer hardware/system dimensions.
+outer hardware/system dimensions or auto-hide only its compact presentation
+after ten seconds while retaining the Lock Screen Live Activity.
 
 ## Current sizing controls
 
@@ -68,7 +69,7 @@ All values below are SwiftUI points.
 
 ```swift
 // Leading side
-activityIcon(context, size: 12)
+IstiqamahMark()
     .frame(width: 16, height: 16)
 
 // Trailing side
@@ -78,7 +79,7 @@ compactTimer(context)
     .frame(width: 48, alignment: .trailing)
 ```
 
-Compact mode places the state icon to the left of the camera and the countdown
+Compact mode places the branded mark to the left of the camera and the countdown
 to the right. Its dedicated `Text(timerInterval:countsDown:)` stays live without
 reusing the unconstrained full countdown view. The exact 48-point trailing frame
 caps the timer's layout request so it cannot stretch the black capsule, while
@@ -103,8 +104,8 @@ Edit the three `DynamicIslandExpandedRegion` blocks and the two
 
 | Element | Current value |
 | --- | --- |
-| Icon | 24-point symbol in a `30 x 30` frame |
-| Countdown | 32-point medium monospaced font in warm gold |
+| Icon | SwiftUI-drawn brand mark in a `30 x 30` frame |
+| Countdown | 32-point medium monospaced font in warm white |
 | Pause/Resume and End controls | Two `40 x 40` circular buttons |
 | Bottom metrics | Elapsed/duration, start, end, and status |
 | Outer padding | `16` on all sides |
@@ -116,9 +117,9 @@ changes do not control the compact Dynamic Island.
 
 | State | Icon | Countdown | Labels/actions |
 | --- | --- | --- | --- |
-| Running | Indigo clock | Live timer to `endDate` | Focus status, Elapsed, Pause, End |
-| Paused | Pause circle | Frozen duration from `pausedAt` to `endDate` | Paused status, Resume, End |
-| Stale/completed | Checkmark | `00:00` | Block Ended, Duration; action buttons hidden |
+| Running | Brand mark | Live timer to `endDate` | Focus status, Elapsed, Pause, End |
+| Paused | Brand mark | Frozen duration from `pausedAt` to `endDate` | Paused status, Resume, End |
+| Stale/completed | Brand mark | `00:00` | Block Ended, Duration; action buttons hidden |
 
 `context.isStale` controls the completed visuals. In normal synchronization,
 `LiveActivityManager` ends completed or expired activities with an immediate
@@ -129,7 +130,7 @@ dismissal policy, so the completed presentation may be brief or not visible.
 - `countdown(_:)` selects live, paused, or completed time text.
 - `elapsed(_:)` selects live, paused, or total duration text.
 - `metricGrid(_:)` renders elapsed/duration, start, end, and status.
-- `activityIcon(_:size:)` selects clock, pause, or checkmark.
+- `IstiqamahMark` draws the compact and Lock Screen brand mark without a raster dependency.
 - `statusLabel(_:)` returns Focus, Paused, or Block Ended.
 - `blockTitle(_:)` returns the block name or Block complete.
 - `dynamicIslandActions(_:)` renders expanded Pause/Resume and End buttons.

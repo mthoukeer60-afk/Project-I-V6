@@ -9,7 +9,7 @@ The native application lives in [`artifacts/project-istiqamah`](artifacts/projec
 ## Native iOS architecture
 
 - SwiftUI application and navigation
-- ActivityKit and WidgetKit Live Activity extension
+- ActivityKit Live Activity plus configurable Home Screen and Lock Screen widgets
 - BackgroundTasks refresh for best-effort system wakeups
 - Codable JSON persistence in Application Support
 - UserNotifications reminders, start alerts, and completion alerts
@@ -27,14 +27,15 @@ The native application lives in [`artifacts/project-istiqamah`](artifacts/projec
 | Completion | Mark blocks and individual actions complete after their start time; Today's System shows date-specific Done/Undone action status |
 | Progress | Weekday-aware seven-day chart, completed-block total, practiced-day count, consistency percentage, current streak, and active or archived per-block totals |
 | Reminders | Time-sensitive alerts before a block, when it starts, and when it ends; start alerts offer I Know and configurable 5/10/15-minute Snooze actions, and dismissing one snoozes it |
-| Reminder sounds | System Default, Gentle Chime, Bright Bell, and Focus Pulse choices; iOS 26 uses the system ringtone for System Default block-start alerts |
+| Reminder sounds | System notification, iOS 26 system ringtone, three bundled tones, and a user-imported audio clip up to 30 seconds converted to notification-safe CAF audio |
 | Live Activities | Starts or updates the current block, removes completed or outdated activities, schedules upcoming starts on iOS 26, and provides status, refresh, and restart controls in Settings |
 | Background refresh | Reloads saved blocks during system-granted background time, refreshes notifications and Live Activities, and schedules the next best-effort wakeup near a block transition |
-| Dynamic Island | Compact clock/checkmark and remaining time; expanded circular Pause/Resume and End controls, large timer, and four-column block metrics |
-| Lock Screen | Clean timer header with clock/checkmark, circular Pause/Resume and End controls, divider, and elapsed/start/end/status metrics |
+| Dynamic Island | Branded compact mark and remaining time; touch-and-hold expanded controls, large timer, and four-column block metrics |
+| Lock Screen | Branded timer header with circular Pause/Resume and End controls, divider, and elapsed/start/end/status metrics |
+| Widgets | Separate configurable Focus and Consistency widgets for Home Screen and Lock Screen, backed by shared app data and an optional personal message |
 | Deep links | Notification and Live Activity taps open the Today tab on the relevant date and block; an ended-block link can record completion |
 | Local data | Codable JSON persistence in Application Support, visible save/recovery failures, preservation of unreadable data, and exclusion of private app data from device/iCloud backup |
-| Preferences | Reminder toggle, early-reminder and snooze timing, sound choice, haptic toggle, notification permission status, and shortcut to iOS Settings |
+| Preferences | Reminder toggle, early-reminder and snooze timing, bundled/system/imported sound choice, widget message, haptic toggle, notification permission status, and shortcut to iOS Settings |
 | Backup | Pretty-printed JSON export and validated, size-bounded restore through native share and file-import sheets |
 | Verification | XCTest coverage for schedules, migration, archives, and backup validation; UI navigation/reorder smoke test; Lock Screen and compact/expanded Dynamic Island preview fixtures |
 | CI package | Manual or version-tag GitHub Action builds the app and embedded Live Activity extension into an unsigned IPA |
@@ -104,7 +105,19 @@ unsigned IPA artifact. See [`docs/github-actions-ios.md`](docs/github-actions-io
   This local-first app has no account or server, so it does not register or
   upload push tokens.
 - Dynamic Island is available only on supported iPhone models. Its running,
-  paused, and completed states use native clock, pause, and checkmark symbols.
+  paused, and completed states use the same compact branded mark and state-aware
+  timer/status content. iOS controls when compact, minimal, and expanded
+  presentations appear; an app cannot auto-hide only the Dynamic Island after
+  ten seconds while keeping the same Live Activity on the Lock Screen.
+- iOS doesn't expose the full built-in tone or ringtone catalog to third-party
+  apps. Project Istiqamah offers the system notification, the system ringtone
+  where available, bundled tones, and imported clips instead.
+- App and widget targets use the `group.com.projectistiqamah.shared` App Group.
+  A signed build must enable that App Group for both bundle identifiers so the
+  widgets can read current app data.
+- Lock Screen widgets and Live Activities are independent system surfaces. If a
+  person installs one of the accessory widgets, iOS can show it in the widget
+  area while the running block Live Activity remains visible below it.
 - An unsigned IPA must be signed before it can be installed on an iPhone.
 - Standard time-sensitive notification sounds still respect the device's notification, silent-mode, and Focus settings. Clock-style overrides require AlarmKit on iOS 26 or Apple's restricted Critical Alerts entitlement.
 - Templates, tags, and search are not implemented.
