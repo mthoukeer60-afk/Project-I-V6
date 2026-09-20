@@ -49,7 +49,7 @@ presentations:
 | --- | --- | --- |
 | Lock Screen/banner | `lockScreen(_:)` | Clock/pause/checkmark, large timer, circular Pause/Resume and End controls, divider, and metric grid |
 | Compact leading | `compactLeading` closure | Running clock, paused symbol, or completed checkmark |
-| Compact trailing | `compactTrailing` and `compactTimer(_:)` | Remaining countdown or `00:00` |
+| Compact trailing | `compactTrailing` closure | Empty, so the compact island stays at the system minimum width |
 | Minimal | `minimal` and `minimalContent(_:)` | Icon only; used when iOS is showing multiple Live Activities |
 | Expanded leading | `DynamicIslandExpandedRegion(.leading)` | Circular Pause/Resume and End controls |
 | Expanded trailing | `DynamicIslandExpandedRegion(.trailing)` | Large gold countdown |
@@ -72,19 +72,13 @@ activityIcon(context, size: 12)
     .frame(width: 16, height: 16)
 
 // Trailing side
-countdown(context)
-    .font(.system(size: 12, weight: .semibold, design: .monospaced))
-    .foregroundStyle(timerAccent)
-    .minimumScaleFactor(0.68)
-    .lineLimit(1)
+EmptyView()
 ```
 
-The trailing timer relies on WidgetKit's native compact-region margins, with no
-manual trailing padding, forced minimum width, or fixed-size override. The
-12-point timer and 16-point icon frame stay compact while allowing WidgetKit to
-propose the region sizes; forcing the timer's ideal width can stretch the island
-and clip the countdown. Check both a short value such as `12:12` and a long
-value such as `3:12:12` when changing the timer presentation.
+Compact mode is intentionally icon-only. A live timer can reserve a wide ideal
+size even when iOS clips its digits, which stretches the black capsule. Keeping
+the trailing region empty leaves the island at its system-controlled minimum
+width. The countdown remains visible in expanded and Lock Screen presentations.
 
 ### Expanded
 
