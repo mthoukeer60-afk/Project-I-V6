@@ -70,7 +70,6 @@ All values below are SwiftUI points.
 // Leading side
 activityIcon(context, size: 12)
     .frame(width: 16, height: 16)
-    .fixedSize()
 
 // Trailing side
 countdown(context)
@@ -78,14 +77,14 @@ countdown(context)
     .foregroundStyle(timerAccent)
     .minimumScaleFactor(0.68)
     .lineLimit(1)
-    .fixedSize(horizontal: true, vertical: false)
 ```
 
 The trailing timer relies on WidgetKit's native compact-region margins, with no
-manual trailing padding or forced minimum width. The compact icon and timer use
-their intrinsic fixed sizes so the island does not consume extra horizontal
-space. Check both a short value such as `12:12` and a long value such as
-`3:12:12` when changing the timer presentation.
+manual trailing padding, forced minimum width, or fixed-size override. The
+12-point timer and 16-point icon frame stay compact while allowing WidgetKit to
+propose the region sizes; forcing the timer's ideal width can stretch the island
+and clip the countdown. Check both a short value such as `12:12` and a long
+value such as `3:12:12` when changing the timer presentation.
 
 ### Expanded
 
