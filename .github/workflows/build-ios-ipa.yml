@@ -7,7 +7,7 @@ on:
       - "v*"
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: ios-ipa-${{ github.ref }}
@@ -88,10 +88,53 @@ jobs:
           unzip -tq "$ipa_path"
           test -s "$ipa_path"
 
-      - name: Upload unsigned IPA
+      - name: Publish direct IPA download
+        working-directory: ${{ env.APP_DIR }}
+        env:
+          GH_TOKEN: [redacted] github.token }}
+        run: |
+          set -euo pipefail
+
+          ipa_path="build/ProjectIstiqamah-unsigned.ipa"
+          asset_name="ProjectIstiqamah-unsigned.ipa"
+
+          if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
+            release_tag="unsigned-build-${GITHUB_RUN_NUMBER}"
+            release_title="Unsigned iOS IPA build ${GITHUB_RUN_NUMBER}"
+          else
+            release_tag="$GITHUB_REF_NAME"
+            release_title="Project Istiqamah ${GITHUB_REF_NAME}"
+          fi
+
+          if gh release view "$release_tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$release_tag" "$ipa_path" \
+              --clobber \
+              --repo "$GITHUB_REPOSITORY"
+          elif [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
+            gh release create "$release_tag" "$ipa_path" \
+              --target "$GITHUB_SHA" \
+              --title "$release_title" \
+              --notes "Unsigned device IPA from workflow run ${GITHUB_RUN_NUMBER}." \
+              --prerelease \
+              --repo "$GITHUB_REPOSITORY"
+          else
+            gh release create "$release_tag" "$ipa_path" \
+              --target "$GITHUB_SHA" \
+              --title "$release_title" \
+              --notes "Unsigned device IPA built from tag ${GITHUB_REF_NAME}." \
+              --repo "$GITHUB_REPOSITORY"
+          fi
+
+          asset_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/download/${release_tag}/${asset_name}"
+          {
+            echo "## Unsigned IPA ready"
+            echo
+            echo "[Download ProjectIstiqamah-unsigned.ipa](${asset_url})"
+            echo
+            echo "This is an unsigned device build and must be installed with a compatible sideloading/signing tool."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload workflow artifact (ZIP fallback)
         uses: actions/upload-artifact@v4
         with:
           name: project-istiqamah-ios-unsigned
-          path: artifacts/project-istiqamah/build/ProjectIstiqamah-unsigned.ipa
-          if-no-files-found: error
-          retention-days: 14
