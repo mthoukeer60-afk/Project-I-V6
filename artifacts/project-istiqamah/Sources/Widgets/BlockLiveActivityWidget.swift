@@ -38,7 +38,10 @@ struct BlockLiveActivityWidget: Widget {
                     .frame(width: 16, height: 16)
                     .accessibilityLabel("\(blockTitle(context)), \(statusLabel(context))")
             } compactTrailing: {
-                EmptyView()
+                compactTimer(context)
+                    .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                    .foregroundStyle(timerAccent)
+                    .frame(width: 48, alignment: .trailing)
             } minimal: {
                 minimalContent(context)
             }
@@ -124,6 +127,25 @@ struct BlockLiveActivityWidget: Widget {
                 .accessibilityLabel("End block")
             }
         }
+    }
+
+    private func compactTimer(_ context: ActivityViewContext<BlockActivityAttributes>) -> some View {
+        Group {
+            if context.isStale {
+                Text("00:00")
+            } else if let pausedAt = context.state.pausedAt {
+                Text(formattedDuration(context.state.endDate.timeIntervalSince(pausedAt)))
+            } else {
+                Text(
+                    timerInterval: context.state.startDate...context.state.endDate,
+                    countsDown: true
+                )
+            }
+        }
+        .monospacedDigit()
+        .minimumScaleFactor(0.68)
+        .lineLimit(1)
+        .accessibilityLabel("Time remaining")
     }
 
     @ViewBuilder
