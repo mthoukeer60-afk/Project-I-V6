@@ -51,7 +51,7 @@ struct TodayView: View {
             }
             .background(AppTheme.background.ignoresSafeArea())
             .navigationTitle("Project I")
-            .toolbarColorScheme(.dark, for: .navigationBar)
+            .foregroundStyle(AppTheme.primaryText)
         }
         .onReceive(timer) { now = $0 }
         .onReceive(store.$timelineDate) { now = $0 }
@@ -66,7 +66,7 @@ struct TodayView: View {
                 .font(.headline)
             Text("Create a block or adjust its time in Blocks.")
                 .font(.subheadline)
-                .foregroundStyle(AppTheme.muted)
+                .foregroundStyle(AppTheme.secondaryText)
                 .multilineTextAlignment(.center)
             Button("Start a block", systemImage: "plus") {
                 onStartBlock()
@@ -84,7 +84,7 @@ struct TodayView: View {
             Text("CURRENT DATE")
                 .font(.caption2.bold())
                 .tracking(1.4)
-                .foregroundStyle(AppTheme.muted)
+                .foregroundStyle(AppTheme.secondaryText)
             HStack {
                 Button { moveDay(-1) } label: {
                     Image(systemName: "chevron.left").frame(width: 32, height: 32)
@@ -151,7 +151,7 @@ struct TodayView: View {
                     ? "\(item.block.startTime) – \(item.block.endTime)"
                     : "Paused · slot ends at \(item.block.endTime)"
                 )
-                    .foregroundStyle(AppTheme.muted)
+                    .foregroundStyle(AppTheme.secondaryText)
                 Spacer()
                 if phase == .running {
                     Button(pausedAt == nil ? "Pause" : "Resume") {
@@ -181,7 +181,7 @@ struct TodayView: View {
                 Text("ACTIONS")
                     .font(.caption2.bold())
                     .tracking(1.4)
-                    .foregroundStyle(AppTheme.muted)
+                    .foregroundStyle(AppTheme.secondaryText)
                 ForEach(item.block.actions) { action in
                     actionRow(action, in: item)
                 }
@@ -197,7 +197,7 @@ struct TodayView: View {
                 Text(isToday ? "TODAY'S SYSTEM" : "SELECTED DAY'S SYSTEM")
                     .font(.caption2.bold())
                     .tracking(1.4)
-                    .foregroundStyle(AppTheme.muted)
+                    .foregroundStyle(AppTheme.secondaryText)
                 Spacer()
                 Text("\(selectedSchedule.count) \(selectedSchedule.count == 1 ? "BLOCK" : "BLOCKS")")
                     .font(.caption2.weight(.semibold))
@@ -210,7 +210,7 @@ struct TodayView: View {
 
                 if item.id != selectedSchedule.last?.id {
                     Divider()
-                        .overlay(AppTheme.border)
+                        .overlay(AppTheme.divider)
                         .padding(.leading, 54)
                 }
             }
@@ -233,10 +233,10 @@ struct TodayView: View {
                 } label: {
                     Image(systemName: completed ? "checkmark.circle.fill" : "circle")
                         .font(.system(size: 27, weight: .medium))
-                        .foregroundStyle(completed ? AppTheme.primary : AppTheme.muted)
+                        .foregroundStyle(completed ? AppTheme.completed : AppTheme.tertiaryText)
                         .contentTransition(.symbolEffect(.replace))
                         .frame(width: 44, height: 44)
-                        .background(completed ? AppTheme.primary.opacity(0.10) : Color.clear)
+                        .background(completed ? AppTheme.completed.opacity(0.12) : Color.clear)
                         .clipShape(Circle())
                 }
                 .buttonStyle(PressedScaleButtonStyle())
@@ -250,11 +250,11 @@ struct TodayView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(item.block.name)
                         .font(.headline.weight(.semibold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(AppTheme.primaryText)
                         .lineLimit(1)
                     Label("\(item.block.startTime) – \(item.block.endTime)", systemImage: "clock")
                         .font(.caption)
-                        .foregroundStyle(AppTheme.muted)
+                        .foregroundStyle(AppTheme.secondaryText)
                 }
 
                 Spacer(minLength: 8)
@@ -271,7 +271,7 @@ struct TodayView: View {
             if item.block.actions.isEmpty {
                 Text("No actions")
                     .font(.caption)
-                    .foregroundStyle(AppTheme.muted)
+                    .foregroundStyle(AppTheme.tertiaryText)
                     .padding(.leading, 54)
             } else {
                 VStack(spacing: 4) {
@@ -292,8 +292,8 @@ struct TodayView: View {
         return HStack(spacing: 10) {
             Text(action.name)
                 .font(.subheadline)
-                .foregroundStyle(completed ? AppTheme.muted : Color.white)
-                .strikethrough(completed, color: AppTheme.muted)
+                .foregroundStyle(completed ? AppTheme.secondaryText : AppTheme.primaryText)
+                .strikethrough(completed, color: AppTheme.secondaryText)
                 .lineLimit(2)
 
             Spacer(minLength: 8)
@@ -305,14 +305,14 @@ struct TodayView: View {
             } label: {
                 Label(completed ? "Done" : "Mark done", systemImage: completed ? "checkmark" : "circle")
                     .font(.caption.weight(.semibold))
-                    .foregroundStyle(completed ? AppTheme.primary : Color.white.opacity(0.88))
+                    .foregroundStyle(completed ? AppTheme.completed : AppTheme.primaryText)
                     .padding(.horizontal, 11)
                     .frame(minHeight: 36)
-                    .background(completed ? AppTheme.primary.opacity(0.14) : AppTheme.raised)
+                    .background(completed ? AppTheme.completed.opacity(0.14) : AppTheme.elevatedSurface)
                     .clipShape(Capsule())
                     .overlay {
                         Capsule()
-                            .stroke(completed ? AppTheme.primary.opacity(0.24) : AppTheme.border)
+                            .stroke(completed ? AppTheme.completed.opacity(0.26) : AppTheme.border)
                     }
                     .contentTransition(.symbolEffect(.replace))
             }
@@ -372,9 +372,10 @@ private enum SystemBlockStatus {
 
     var color: Color {
         switch self {
-        case .completed, .running: AppTheme.primary
-        case .upcoming: AppTheme.muted
-        case .incomplete: .red
+        case .completed: AppTheme.completed
+        case .running: AppTheme.primary
+        case .upcoming: AppTheme.info
+        case .incomplete: AppTheme.warning
         }
     }
 }

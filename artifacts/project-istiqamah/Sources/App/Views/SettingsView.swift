@@ -46,10 +46,10 @@ struct SettingsView: View {
                     LabeledContent("Refresh request", value: store.backgroundScheduleStatus)
                     Text("ActivityKit schedules upcoming blocks on iOS 26 and starts the current block when the app is active on earlier supported versions.")
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(AppTheme.secondaryText)
                     Text("iOS chooses when background refresh runs, so notifications remain the reliable fallback for exact block times.")
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(AppTheme.secondaryText)
                     Button("Refresh Live Activities") {
                         store.refreshSystemFeatures()
                     }
@@ -71,7 +71,7 @@ struct SettingsView: View {
                     if let notificationTestStatus = store.notificationTestStatus {
                         Text(notificationTestStatus)
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(AppTheme.secondaryText)
                     }
                 }
 
@@ -97,23 +97,25 @@ struct SettingsView: View {
                     if let backupError {
                         Text(backupError)
                             .font(.caption)
-                            .foregroundStyle(.red)
+                            .foregroundStyle(AppTheme.error)
                     }
                     Text("Data is stored privately in the app's Application Support directory.")
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(AppTheme.secondaryText)
                 }
 
                 Section("About") {
                     LabeledContent("Project Istiqamah", value: "1.0.0")
                     Text("A private practice of showing up, one block at a time.")
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(AppTheme.secondaryText)
                 }
             }
             .scrollContentBackground(.hidden)
             .background(AppTheme.background)
             .navigationTitle("Settings")
+            .foregroundStyle(AppTheme.primaryText)
+            .tint(AppTheme.primary)
             .task {
                 await loadNotificationStatus()
                 loadBackgroundRefreshStatus()

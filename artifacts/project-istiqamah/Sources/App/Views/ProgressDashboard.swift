@@ -63,7 +63,7 @@ struct ProgressDashboard: View {
                             Text("CURRENT STREAK")
                                 .font(.caption2.bold())
                                 .tracking(1.4)
-                                .foregroundStyle(AppTheme.muted)
+                                .foregroundStyle(AppTheme.secondaryText)
                             Text("\(streak)")
                                 .font(.system(size: 62, weight: .regular))
                             Text(streak == 1 ? "DAY" : "DAYS")
@@ -72,8 +72,9 @@ struct ProgressDashboard: View {
                         Spacer()
                         Image(systemName: "chart.line.uptrend.xyaxis")
                             .font(.title)
+                            .foregroundStyle(AppTheme.primary)
                             .frame(width: 60, height: 60)
-                            .background(AppTheme.raised)
+                            .background(AppTheme.elevatedSurface)
                             .clipShape(Circle())
                     }
                     .padding(20)
@@ -85,7 +86,7 @@ struct ProgressDashboard: View {
                                 Text("Daily consistency").font(.headline)
                                 Text("Completed blocks · last 7 days")
                                     .font(.caption)
-                                    .foregroundStyle(AppTheme.muted)
+                                    .foregroundStyle(AppTheme.secondaryText)
                             }
                             Spacer()
                             Text("\(completedLastSevenDays) TOTAL")
@@ -111,7 +112,7 @@ struct ProgressDashboard: View {
                     .padding(18)
                     .istiqamahCard()
 
-                    HStack {
+                    HStack(spacing: 10) {
                         stat("DAYS PRACTICED", value: "\(practicedDays)")
                         stat("BLOCKS DONE", value: "\(completedLastSevenDays)")
                         stat("CONSISTENCY", value: "\(consistency)%")
@@ -121,20 +122,20 @@ struct ProgressDashboard: View {
                         Text("YOUR REPEATERS")
                             .font(.caption2.bold())
                             .tracking(1.4)
-                            .foregroundStyle(AppTheme.muted)
+                            .foregroundStyle(AppTheme.secondaryText)
                         ForEach(store.blocks.sorted { $0.completedDates.count > $1.completedDates.count }) { block in
                             HStack {
-                                Circle().fill(AppTheme.primary).frame(width: 7, height: 7)
+                                Circle().fill(AppTheme.completed).frame(width: 7, height: 7)
                                 Text(block.name).lineLimit(1)
                                 if block.archivedAt != nil {
                                     Text("ARCHIVED")
                                         .font(.system(size: 7, weight: .bold))
-                                        .foregroundStyle(AppTheme.muted)
+                                        .foregroundStyle(AppTheme.tertiaryText)
                                 }
                                 Spacer()
                                 Text("\(block.completedDates.count) days")
                                     .font(.caption)
-                                    .foregroundStyle(AppTheme.muted)
+                                    .foregroundStyle(AppTheme.secondaryText)
                             }
                         }
                     }
@@ -145,6 +146,7 @@ struct ProgressDashboard: View {
             }
             .background(AppTheme.background.ignoresSafeArea())
             .navigationTitle("Progress")
+            .foregroundStyle(AppTheme.primaryText)
         }
     }
 
@@ -152,9 +154,16 @@ struct ProgressDashboard: View {
         VStack(alignment: .leading, spacing: 6) {
             Text(label)
                 .font(.system(size: 8, weight: .bold))
-                .foregroundStyle(AppTheme.muted)
+                .foregroundStyle(AppTheme.secondaryText)
             Text(value).font(.title3.bold())
         }
+        .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
+        .background(AppTheme.elevatedSurface)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(AppTheme.border)
+        }
     }
 }

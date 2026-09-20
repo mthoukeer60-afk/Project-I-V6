@@ -33,6 +33,8 @@ struct RootTabView: View {
                 .tag(AppTab.settings)
         }
         .tint(AppTheme.primary)
+        .toolbarBackground(AppTheme.surface, for: .tabBar)
+        .toolbarBackground(.visible, for: .tabBar)
         .onReceive(router.$route.compactMap { $0 }) { _ in
             selection = .today
         }

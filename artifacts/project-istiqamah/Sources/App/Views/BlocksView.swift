@@ -15,15 +15,15 @@ struct BlocksView: View {
                             Image(systemName: "clock")
                                 .foregroundStyle(AppTheme.primary)
                                 .frame(width: 34, height: 34)
-                                .background(AppTheme.raised)
+                                .background(AppTheme.elevatedSurface)
                                 .clipShape(Circle())
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(block.name)
                                     .font(.headline)
-                                    .foregroundStyle(.white)
+                                    .foregroundStyle(AppTheme.primaryText)
                                 Text("\(block.startTime) – \(block.endTime) · \(block.actions.count) actions")
                                     .font(.caption)
-                                    .foregroundStyle(AppTheme.muted)
+                                    .foregroundStyle(AppTheme.secondaryText)
                                 Text(weekdaySummary(block.weekdays))
                                     .font(.caption2)
                                     .foregroundStyle(AppTheme.primary)
@@ -36,12 +36,12 @@ struct BlocksView: View {
                         .accessibilityAddTraits(.isButton)
                         .accessibilityAction { draft = block }
                         .accessibilityHint("Double-tap to edit. Use Reorder to move this block into another time slot.")
-                        .listRowBackground(AppTheme.card)
+                        .listRowBackground(AppTheme.surface)
                         .swipeActions {
                             Button { store.archive(block) } label: {
                                 Label("Archive", systemImage: "archivebox")
                             }
-                            .tint(.orange)
+                            .tint(AppTheme.warning)
                         }
                     }
                     .onMove(perform: moveBlocks)
@@ -54,13 +54,13 @@ struct BlocksView: View {
                         ForEach(store.archivedBlocks) { block in
                             HStack(spacing: 12) {
                                 Image(systemName: "archivebox.fill")
-                                    .foregroundStyle(AppTheme.muted)
+                                    .foregroundStyle(AppTheme.tertiaryText)
                                 VStack(alignment: .leading, spacing: 3) {
                                     Text(block.name)
                                         .font(.subheadline.weight(.medium))
                                     Text("\(block.startTime) – \(block.endTime) · \(weekdaySummary(block.weekdays))")
                                         .font(.caption)
-                                        .foregroundStyle(AppTheme.muted)
+                                        .foregroundStyle(AppTheme.secondaryText)
                                 }
                                 Spacer()
                                 Button {
@@ -77,7 +77,7 @@ struct BlocksView: View {
                                 .tint(AppTheme.primary)
                                 .controlSize(.small)
                             }
-                            .listRowBackground(AppTheme.card)
+                            .listRowBackground(AppTheme.surface)
                         }
                     }
                 }
@@ -86,6 +86,8 @@ struct BlocksView: View {
             .scrollContentBackground(.hidden)
             .background(AppTheme.background)
             .navigationTitle("Blocks")
+            .foregroundStyle(AppTheme.primaryText)
+            .tint(AppTheme.primary)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button(editMode.isEditing ? "Done" : "Reorder") {
@@ -195,7 +197,7 @@ private struct BlockEditor: View {
 
                 if let errorMessage {
                     Section {
-                        Text(errorMessage).foregroundStyle(.red)
+                        Text(errorMessage).foregroundStyle(AppTheme.error)
                     }
                 }
             }
@@ -266,9 +268,9 @@ private struct WeekdayPicker: View {
                 } label: {
                     Text(DateTools.weekdayName(weekday, width: .narrow))
                         .font(.caption.weight(.semibold))
-                        .foregroundStyle(selected ? Color.white : AppTheme.muted)
+                        .foregroundStyle(selected ? AppTheme.onPrimary : AppTheme.secondaryText)
                         .frame(width: 34, height: 34)
-                        .background(selected ? AppTheme.primary : AppTheme.raised)
+                        .background(selected ? AppTheme.primary : AppTheme.elevatedSurface)
                         .clipShape(Circle())
                 }
                 .buttonStyle(.plain)

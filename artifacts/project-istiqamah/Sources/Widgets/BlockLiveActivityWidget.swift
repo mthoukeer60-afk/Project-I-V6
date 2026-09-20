@@ -5,14 +5,17 @@ import SwiftUI
 import WidgetKit
 
 struct BlockLiveActivityWidget: Widget {
-    private let accent = Color(red: 0.56, green: 0.66, blue: 1.0)
-    private let timerAccent = Color(red: 0.98, green: 0.82, blue: 0.30)
+    private let accent = Color(red: 0.56, green: 0.83, blue: 0.72)
+    private let timerAccent = Color(red: 0.95, green: 0.96, blue: 0.95)
+    private let activityBackground = Color(red: 0.05, green: 0.07, blue: 0.06)
+    private let secondaryText = Color(red: 0.62, green: 0.67, blue: 0.65)
+    private let divider = Color(red: 0.13, green: 0.16, blue: 0.15)
 
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: BlockActivityAttributes.self) { context in
             lockScreen(context)
-                .activityBackgroundTint(Color(red: 0.055, green: 0.055, blue: 0.065))
-                .activitySystemActionForegroundColor(.white)
+                .activityBackgroundTint(activityBackground)
+                .activitySystemActionForegroundColor(timerAccent)
                 .widgetURL(context.attributes.deepLink)
         } dynamicIsland: { context in
             DynamicIsland {
@@ -69,7 +72,7 @@ struct BlockLiveActivityWidget: Widget {
             }
 
             Divider()
-                .overlay(.white.opacity(0.12))
+                .overlay(divider)
 
             metricGrid(context)
         }
@@ -100,7 +103,7 @@ struct BlockLiveActivityWidget: Widget {
                 )) {
                     Image(systemName: context.state.isPaused ? "play.fill" : "pause.fill")
                         .font(.system(size: buttonSize * 0.36, weight: .bold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(activityBackground)
                         .frame(width: buttonSize, height: buttonSize)
                         .background(Circle().fill(accent.opacity(0.30)))
                         .overlay {
@@ -116,7 +119,7 @@ struct BlockLiveActivityWidget: Widget {
                 )) {
                     Image(systemName: "stop.fill")
                         .font(.system(size: buttonSize * 0.32, weight: .bold))
-                        .foregroundStyle(.white.opacity(0.9))
+                        .foregroundStyle(timerAccent.opacity(0.88))
                         .frame(width: buttonSize, height: buttonSize)
                         .background(Circle().fill(.white.opacity(0.10)))
                         .overlay {
@@ -178,12 +181,12 @@ struct BlockLiveActivityWidget: Widget {
         VStack(spacing: 3) {
             value()
                 .font(.system(size: 12, weight: .semibold, design: .monospaced))
-                .foregroundStyle(.white)
+                .foregroundStyle(timerAccent)
                 .minimumScaleFactor(0.68)
                 .lineLimit(1)
             Text(label)
                 .font(.system(size: 7, weight: .medium))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(secondaryText)
                 .lineLimit(1)
                 .minimumScaleFactor(0.72)
         }
@@ -234,7 +237,7 @@ struct BlockLiveActivityWidget: Widget {
         } else if context.state.isPaused {
             Image(systemName: "pause.circle.fill")
                 .font(.system(size: size, weight: .semibold))
-                .foregroundStyle(.white.opacity(0.72))
+                .foregroundStyle(secondaryText)
                 .contentTransition(.symbolEffect(.replace))
                 .accessibilityLabel("Block paused")
         } else {

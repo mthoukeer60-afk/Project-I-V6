@@ -89,7 +89,7 @@ caps the timer's layout request so it cannot stretch the black capsule, while
 | Element | Current value |
 | --- | --- |
 | Leading controls | Two `36 x 36` circular buttons for Pause/Resume and End |
-| Countdown | 28-point semibold monospaced font in warm gold |
+| Countdown | 28-point semibold monospaced font in warm white |
 | Countdown container | Maximum width `120` |
 | Bottom metrics | Elapsed/duration, start, end, and status |
 | Metric value/label fonts | `12` and `7` |

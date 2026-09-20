@@ -81,7 +81,6 @@ struct ProjectIstiqamahApp: App {
         WindowGroup {
             RootTabView()
                 .environmentObject(store)
-                .preferredColorScheme(.dark)
                 .onOpenURL { router.open($0) }
                 .onReceive(router.$route.compactMap { $0 }) { route in
                     store.handle(route)
