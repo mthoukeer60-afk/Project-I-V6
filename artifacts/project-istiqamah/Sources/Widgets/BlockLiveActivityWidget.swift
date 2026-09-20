@@ -10,7 +10,7 @@ struct BlockLiveActivityWidget: Widget {
     private enum CompactMetrics {
         static let iconPointSize: CGFloat = 12
         static let iconFrameSize: CGFloat = 16
-        static let timerWidth: CGFloat = 40
+        static let timerMinimumWidth: CGFloat = 40
     }
 
     var body: some WidgetConfiguration {
@@ -235,7 +235,7 @@ struct BlockLiveActivityWidget: Widget {
             .font(.system(size: 12, weight: .semibold, design: .monospaced))
             .minimumScaleFactor(0.72)
             .lineLimit(1)
-            .frame(width: CompactMetrics.timerWidth, alignment: .trailing)
+            .frame(minWidth: CompactMetrics.timerMinimumWidth, alignment: .trailing)
             .foregroundStyle(accent)
             .accessibilityLabel("Time remaining")
     }
