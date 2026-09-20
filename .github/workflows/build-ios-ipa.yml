@@ -91,7 +91,7 @@ jobs:
       - name: Publish direct IPA download
         working-directory: ${{ env.APP_DIR }}
         env:
-          GH_TOKEN: [redacted] github.token }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
 
@@ -138,3 +138,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: project-istiqamah-ios-unsigned
+          path: artifacts/project-istiqamah/build/ProjectIstiqamah-unsigned.ipa
+          if-no-files-found: error
+          retention-days: 14
