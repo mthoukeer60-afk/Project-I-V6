@@ -516,11 +516,11 @@ final class AppStore: ObservableObject {
             currentStreak: currentStreak(at: now)
         )
         if IstiqamahWidgetStore.save(snapshot) {
-            widgetSyncStatus = "Updated"
+            widgetSyncStatus = "Updated now"
             WidgetCenter.shared.reloadTimelines(ofKind: IstiqamahWidgetStore.focusWidgetKind)
             WidgetCenter.shared.reloadTimelines(ofKind: IstiqamahWidgetStore.consistencyWidgetKind)
         } else {
-            widgetSyncStatus = "App Group unavailable"
+            widgetSyncStatus = "Sharing unavailable — reinstall with App Groups enabled"
         }
     }
 

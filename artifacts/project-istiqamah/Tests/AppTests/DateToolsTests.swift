@@ -60,6 +60,23 @@ final class DateToolsTests: XCTestCase {
         XCTAssertEqual(restored, snapshot)
     }
 
+    func testWidgetStorePrefersConfiguredOrResignedIstiqamahGroup() {
+        XCTAssertEqual(
+            IstiqamahWidgetStore.preferredGroupIdentifier(from: [
+                "group.other.shared",
+                "group.com.projectistiqamah.shared"
+            ]),
+            "group.com.projectistiqamah.shared"
+        )
+        XCTAssertEqual(
+            IstiqamahWidgetStore.preferredGroupIdentifier(from: [
+                "group.other.shared",
+                "group.ABC123.ProjectIstiqamah.shared"
+            ]),
+            "group.ABC123.ProjectIstiqamah.shared"
+        )
+    }
+
     func testProgressWidgetDeepLinkSelectsProgressDestination() throws {
         let url = try XCTUnwrap(URL(string: "project-istiqamah://progress"))
 

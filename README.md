@@ -114,7 +114,10 @@ unsigned IPA artifact. See [`docs/github-actions-ios.md`](docs/github-actions-io
   where available, bundled tones, and imported clips instead.
 - App and widget targets use the `group.com.projectistiqamah.shared` App Group.
   A signed build must enable that App Group for both bundle identifiers so the
-  widgets can read current app data.
+  widgets can read current app data. The shared snapshot is written atomically
+  to the App Group container, and the runtime also recognizes an Istiqamah App
+  Group identifier rewritten consistently by a sideload signer. In Settings,
+  `Widget data` reports when the installed signature has no usable shared group.
 - Lock Screen widgets and Live Activities are independent system surfaces. If a
   person installs one of the accessory widgets, iOS can show it in the widget
   area while the running block Live Activity remains visible below it.
