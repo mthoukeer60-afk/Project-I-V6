@@ -1,4 +1,4 @@
-name: Build unsigned iOS IPA
+name: Build SideStore-ready iOS IPA
 
 on:
   workflow_dispatch:
@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   build-ios:
-    name: Build unsigned IPA
+    name: Build SideStore-ready IPA
     runs-on: macos-26
     timeout-minutes: 60
     env:
@@ -51,13 +51,13 @@ jobs:
             CODE_SIGN_IDENTITY="" \
             clean build
 
-      - name: Package and verify IPA
+      - name: Embed entitlements and package IPA
         working-directory: ${{ env.APP_DIR }}
         run: |
           set -euo pipefail
 
           app_path="build/DerivedData/Build/Products/Release-iphoneos/ProjectIstiqamah.app"
-          ipa_path="build/ProjectIstiqamah-unsigned.ipa"
+          ipa_path="build/ProjectIstiqamah-SideStore.ipa"
           widget_path="$app_path/PlugIns/ProjectIstiqamahWidgets.appex"
 
           if [[ ! -d "$app_path" ]]; then
@@ -71,10 +71,31 @@ jobs:
             exit 1
           fi
 
-          if codesign --verify "$app_path" >/dev/null 2>&1; then
-            echo "Expected an unsigned app, but a valid signature was found" >&2
-            exit 1
-          fi
+          # SideStore discovers the capabilities it must provision from the
+          # existing Mach-O entitlements. An ad-hoc signature preserves that
+          # metadata for SideStore to read and replace with its own signature.
+          codesign \
+            --force \
+            --sign - \
+            --entitlements Config/ProjectIstiqamahWidgets.entitlements \
+            --generate-entitlement-der \
+            "$widget_path"
+          codesign \
+            --force \
+            --sign - \
+            --entitlements Config/ProjectIstiqamah.entitlements \
+            --generate-entitlement-der \
+            "$app_path"
+
+          codesign --verify --deep --strict "$app_path"
+
+          for signed_path in "$app_path" "$widget_path"; do
+            entitlements="$(codesign --display --entitlements :- "$signed_path" 2>/dev/null)"
+            if ! grep -Fq "group.com.projectistiqamah.shared" <<<"$entitlements"; then
+              echo "Expected App Group entitlement is missing from $signed_path" >&2
+              exit 1
+            fi
+          done
 
           rm -rf build/package
           mkdir -p build/package/Payload
@@ -82,16 +103,16 @@ jobs:
 
           (
             cd build/package
-            /usr/bin/zip -qry "../ProjectIstiqamah-unsigned.ipa" Payload
+            /usr/bin/zip -qry "../ProjectIstiqamah-SideStore.ipa" Payload
           )
 
           unzip -tq "$ipa_path"
           test -s "$ipa_path"
 
-      - name: Upload unsigned IPA
+      - name: Upload SideStore-ready IPA
         uses: actions/upload-artifact@v4
         with:
-          name: project-istiqamah-ios-unsigned
-          path: artifacts/project-istiqamah/build/ProjectIstiqamah-unsigned.ipa
+          name: project-istiqamah-ios-sidestore
+          path: artifacts/project-istiqamah/build/ProjectIstiqamah-SideStore.ipa
           if-no-files-found: error
           retention-days: 14
