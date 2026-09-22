@@ -70,10 +70,8 @@ enum IstiqamahWidgetStore {
     static let focusWidgetKind = "ProjectIstiqamah.FocusWidget"
     static let consistencyWidgetKind = "ProjectIstiqamah.ConsistencyWidget"
     private static let snapshotFileName = "istiqamah-widget-snapshot.json"
-    private static let originalBundleIdentifiers = [
-        "com.projectistiqamah.app.widgets",
-        "com.projectistiqamah.app"
-    ]
+    private static let originalAppBundleIdentifier = "com.projectistiqamah.app"
+    private static let originalWidgetBundleIdentifier = "com.projectistiqamah.app.widgets"
 
     private static let sharedContainer: (identifier: String, url: URL)? = {
         for identifier in candidateAppGroupIdentifiers(for: Bundle.main.bundleIdentifier) {
@@ -87,25 +85,54 @@ enum IstiqamahWidgetStore {
     }()
 
     /// SideStore makes App Group identifiers unique to the signing team by
-    /// appending the same suffix it adds to the app and extension bundle IDs.
+    /// adding the same team suffix it uses for the app and extension bundle IDs.
     /// Try the configured identifier first for normal Xcode/App Store builds,
     /// then the derived identifier for a SideStore-resigned build.
     static func candidateAppGroupIdentifiers(for bundleIdentifier: String?) -> [String] {
         var identifiers = [appGroupIdentifier]
-        guard let bundleIdentifier else { return identifiers }
-
-        for originalIdentifier in originalBundleIdentifiers
-        where bundleIdentifier.hasPrefix(originalIdentifier + ".") {
-            let suffixStart = bundleIdentifier.index(
-                bundleIdentifier.startIndex,
-                offsetBy: originalIdentifier.count + 1
-            )
-            let suffix = String(bundleIdentifier[suffixStart...])
-            guard !suffix.isEmpty else { break }
-            identifiers.append("\(appGroupIdentifier).\(suffix)")
-            break
+        guard let bundleIdentifier,
+              let teamSuffix = sideStoreTeamSuffix(from: bundleIdentifier) else {
+            return identifiers
         }
+        identifiers.append("\(appGroupIdentifier).\(teamSuffix)")
         return identifiers
+    }
+
+    private static func sideStoreTeamSuffix(from bundleIdentifier: String) -> String? {
+        guard bundleIdentifier != originalAppBundleIdentifier,
+              bundleIdentifier != originalWidgetBundleIdentifier else { return nil }
+
+        // Older resigning layouts append the team after the complete target ID:
+        // com.projectistiqamah.app.widgets.TEAM
+        let directWidgetPrefix = originalWidgetBundleIdentifier + "."
+        if bundleIdentifier.hasPrefix(directWidgetPrefix) {
+            let suffix = String(bundleIdentifier.dropFirst(directWidgetPrefix.count))
+            return suffix.isEmpty ? nil : suffix
+        }
+
+        // SideStore keeps the extension suffix after the resigned parent ID:
+        // com.projectistiqamah.app.TEAM.widgets
+        let appPrefix = originalAppBundleIdentifier + "."
+        let widgetSuffix = String(
+            originalWidgetBundleIdentifier.dropFirst(originalAppBundleIdentifier.count)
+        )
+        if bundleIdentifier.hasPrefix(appPrefix),
+           bundleIdentifier.hasSuffix(widgetSuffix) {
+            let suffixLength = bundleIdentifier.count - appPrefix.count - widgetSuffix.count
+            if suffixLength > 0 {
+                let teamStart = bundleIdentifier.index(
+                    bundleIdentifier.startIndex,
+                    offsetBy: appPrefix.count
+                )
+                let teamEnd = bundleIdentifier.index(teamStart, offsetBy: suffixLength)
+                return String(bundleIdentifier[teamStart..<teamEnd])
+            }
+        }
+
+        // The main SideStore app ID is com.projectistiqamah.app.TEAM.
+        guard bundleIdentifier.hasPrefix(appPrefix) else { return nil }
+        let suffix = String(bundleIdentifier.dropFirst(appPrefix.count))
+        return suffix.isEmpty ? nil : suffix
     }
 
     static var activeAppGroupIdentifier: String? {

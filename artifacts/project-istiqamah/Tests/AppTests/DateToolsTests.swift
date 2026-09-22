@@ -79,7 +79,19 @@ final class DateToolsTests: XCTestCase {
         )
     }
 
-    func testWidgetStoreDerivesSameSideStoreGroupFromWidgetBundleIdentifier() {
+    func testWidgetStoreDerivesSameSideStoreGroupFromSideStoreWidgetBundleIdentifier() {
+        XCTAssertEqual(
+            IstiqamahWidgetStore.candidateAppGroupIdentifiers(
+                for: "com.projectistiqamah.app.TEAM123456.widgets"
+            ),
+            [
+                "group.com.projectistiqamah.shared",
+                "group.com.projectistiqamah.shared.TEAM123456"
+            ]
+        )
+    }
+
+    func testWidgetStoreSupportsDirectSuffixResigningLayout() {
         XCTAssertEqual(
             IstiqamahWidgetStore.candidateAppGroupIdentifiers(
                 for: "com.projectistiqamah.app.widgets.TEAM123456"
@@ -88,6 +100,15 @@ final class DateToolsTests: XCTestCase {
                 "group.com.projectistiqamah.shared",
                 "group.com.projectistiqamah.shared.TEAM123456"
             ]
+        )
+    }
+
+    func testWidgetStoreDoesNotTreatWidgetNameAsTeamSuffix() {
+        XCTAssertEqual(
+            IstiqamahWidgetStore.candidateAppGroupIdentifiers(
+                for: "com.projectistiqamah.app.widgets"
+            ),
+            ["group.com.projectistiqamah.shared"]
         )
     }
 
