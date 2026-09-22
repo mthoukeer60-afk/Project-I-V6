@@ -1,5 +1,4 @@
 import Foundation
-import Security
 
 struct WidgetBlockSummary: Codable, Hashable, Sendable {
     let id: UUID
@@ -66,26 +65,17 @@ struct IstiqamahWidgetSnapshot: Codable, Hashable, Sendable {
 }
 
 enum IstiqamahWidgetStore {
-    static let preferredAppGroupIdentifier = "group.com.projectistiqamah.shared"
+    static let appGroupIdentifier = "group.com.projectistiqamah.shared"
     static let snapshotKey = "istiqamah.widget.snapshot.v1"
     static let focusWidgetKind = "ProjectIstiqamah.FocusWidget"
     static let consistencyWidgetKind = "ProjectIstiqamah.ConsistencyWidget"
     private static let snapshotFileName = "istiqamah-widget-snapshot.json"
 
     private static let sharedContainer: (identifier: String, url: URL)? = {
-        let entitledGroups = currentProcessAppGroups()
-        var candidates = entitledGroups.sorted(by: groupComesBefore)
-        if !candidates.contains(preferredAppGroupIdentifier) {
-            candidates.append(preferredAppGroupIdentifier)
-        }
-        for identifier in candidates {
-            if let url = FileManager.default.containerURL(
-                forSecurityApplicationGroupIdentifier: identifier
-            ) {
-                return (identifier, url)
-            }
-        }
-        return nil
+        guard let url = FileManager.default.containerURL(
+            forSecurityApplicationGroupIdentifier: appGroupIdentifier
+        ) else { return nil }
+        return (appGroupIdentifier, url)
     }()
 
     static var activeAppGroupIdentifier: String? {
@@ -123,37 +113,7 @@ enum IstiqamahWidgetStore {
         return decode(data)
     }
 
-    static func preferredGroupIdentifier(from identifiers: [String]) -> String? {
-        identifiers.sorted(by: groupComesBefore).first
-    }
-
     private static func decode(_ data: Data) -> IstiqamahWidgetSnapshot? {
         try? JSONDecoder().decode(IstiqamahWidgetSnapshot.self, from: data)
-    }
-
-    private static func groupPriority(_ identifier: String) -> Int {
-        if identifier == preferredAppGroupIdentifier { return 0 }
-        if identifier.localizedCaseInsensitiveContains("projectistiqamah") { return 1 }
-        if identifier.localizedCaseInsensitiveContains("istiqamah") { return 2 }
-        return 3
-    }
-
-    private static func groupComesBefore(_ first: String, _ second: String) -> Bool {
-        let firstPriority = groupPriority(first)
-        let secondPriority = groupPriority(second)
-        if firstPriority != secondPriority {
-            return firstPriority < secondPriority
-        }
-        return first.localizedCaseInsensitiveCompare(second) == .orderedAscending
-    }
-
-    private static func currentProcessAppGroups() -> [String] {
-        guard let task = SecTaskCreateFromSelf(nil),
-              let value = SecTaskCopyValueForEntitlement(
-                task,
-                "com.apple.security.application-groups" as CFString,
-                nil
-              ) else { return [] }
-        return value as? [String] ?? []
     }
 }

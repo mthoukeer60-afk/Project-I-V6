@@ -60,20 +60,10 @@ final class DateToolsTests: XCTestCase {
         XCTAssertEqual(restored, snapshot)
     }
 
-    func testWidgetStorePrefersConfiguredOrResignedIstiqamahGroup() {
+    func testWidgetStoreUsesConfiguredAppGroup() {
         XCTAssertEqual(
-            IstiqamahWidgetStore.preferredGroupIdentifier(from: [
-                "group.other.shared",
-                "group.com.projectistiqamah.shared"
-            ]),
+            IstiqamahWidgetStore.appGroupIdentifier,
             "group.com.projectistiqamah.shared"
-        )
-        XCTAssertEqual(
-            IstiqamahWidgetStore.preferredGroupIdentifier(from: [
-                "group.other.shared",
-                "group.ABC123.ProjectIstiqamah.shared"
-            ]),
-            "group.ABC123.ProjectIstiqamah.shared"
         )
     }
 
