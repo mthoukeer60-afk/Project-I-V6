@@ -70,13 +70,43 @@ enum IstiqamahWidgetStore {
     static let focusWidgetKind = "ProjectIstiqamah.FocusWidget"
     static let consistencyWidgetKind = "ProjectIstiqamah.ConsistencyWidget"
     private static let snapshotFileName = "istiqamah-widget-snapshot.json"
+    private static let originalBundleIdentifiers = [
+        "com.projectistiqamah.app.widgets",
+        "com.projectistiqamah.app"
+    ]
 
     private static let sharedContainer: (identifier: String, url: URL)? = {
-        guard let url = FileManager.default.containerURL(
-            forSecurityApplicationGroupIdentifier: appGroupIdentifier
-        ) else { return nil }
-        return (appGroupIdentifier, url)
+        for identifier in candidateAppGroupIdentifiers(for: Bundle.main.bundleIdentifier) {
+            if let url = FileManager.default.containerURL(
+                forSecurityApplicationGroupIdentifier: identifier
+            ) {
+                return (identifier, url)
+            }
+        }
+        return nil
     }()
+
+    /// SideStore makes App Group identifiers unique to the signing team by
+    /// appending the same suffix it adds to the app and extension bundle IDs.
+    /// Try the configured identifier first for normal Xcode/App Store builds,
+    /// then the derived identifier for a SideStore-resigned build.
+    static func candidateAppGroupIdentifiers(for bundleIdentifier: String?) -> [String] {
+        var identifiers = [appGroupIdentifier]
+        guard let bundleIdentifier else { return identifiers }
+
+        for originalIdentifier in originalBundleIdentifiers
+        where bundleIdentifier.hasPrefix(originalIdentifier + ".") {
+            let suffixStart = bundleIdentifier.index(
+                bundleIdentifier.startIndex,
+                offsetBy: originalIdentifier.count + 1
+            )
+            let suffix = String(bundleIdentifier[suffixStart...])
+            guard !suffix.isEmpty else { break }
+            identifiers.append("\(appGroupIdentifier).\(suffix)")
+            break
+        }
+        return identifiers
+    }
 
     static var activeAppGroupIdentifier: String? {
         sharedContainer?.identifier

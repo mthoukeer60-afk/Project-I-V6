@@ -67,6 +67,30 @@ final class DateToolsTests: XCTestCase {
         )
     }
 
+    func testWidgetStoreDerivesSideStoreGroupFromMainAppBundleIdentifier() {
+        XCTAssertEqual(
+            IstiqamahWidgetStore.candidateAppGroupIdentifiers(
+                for: "com.projectistiqamah.app.TEAM123456"
+            ),
+            [
+                "group.com.projectistiqamah.shared",
+                "group.com.projectistiqamah.shared.TEAM123456"
+            ]
+        )
+    }
+
+    func testWidgetStoreDerivesSameSideStoreGroupFromWidgetBundleIdentifier() {
+        XCTAssertEqual(
+            IstiqamahWidgetStore.candidateAppGroupIdentifiers(
+                for: "com.projectistiqamah.app.widgets.TEAM123456"
+            ),
+            [
+                "group.com.projectistiqamah.shared",
+                "group.com.projectistiqamah.shared.TEAM123456"
+            ]
+        )
+    }
+
     func testProgressWidgetDeepLinkSelectsProgressDestination() throws {
         let url = try XCTUnwrap(URL(string: "project-istiqamah://progress"))
 
