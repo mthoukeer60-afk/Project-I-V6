@@ -110,7 +110,7 @@ struct SettingsView: View {
                     Button("Refresh Widgets", systemImage: "arrow.clockwise") {
                         store.refreshSystemFeatures()
                     }
-                    Text("Add Focus or Consistency from the widget gallery. Both support Home Screen and Lock Screen sizes, and can be customized by touching and holding the widget, then choosing Edit Widget. A Lock Screen widget can appear alongside the running Live Activity.")
+                    Text("Add Focus, Consistency, or Message from the widget gallery. The wide Message widget shows your text from here, or you can set a separate message in Edit Widget. Lock Screen widgets can appear alongside a running Live Activity. If an older Lock Screen widget still shows a sync prompt after updating the app, remove it and add it again.")
                         .font(.caption)
                         .foregroundStyle(AppTheme.secondaryText)
                 }

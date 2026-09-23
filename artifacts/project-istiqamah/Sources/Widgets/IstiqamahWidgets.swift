@@ -25,6 +25,14 @@ struct ConsistencyWidgetConfigurationIntent: WidgetConfigurationIntent {
     var showPersonalMessage: Bool
 }
 
+struct MessageWidgetConfigurationIntent: WidgetConfigurationIntent {
+    static var title: LocalizedStringResource = "Message"
+    static var description = IntentDescription("Display your intention, or set text for this widget only.")
+
+    @Parameter(title: "Widget text (optional)", default: "")
+    var customText: String
+}
+
 private struct FocusWidgetEntry: TimelineEntry {
     let date: Date
     let snapshot: IstiqamahWidgetSnapshot
@@ -35,6 +43,12 @@ private struct ConsistencyWidgetEntry: TimelineEntry {
     let date: Date
     let snapshot: IstiqamahWidgetSnapshot
     let configuration: ConsistencyWidgetConfigurationIntent
+}
+
+private struct MessageWidgetEntry: TimelineEntry {
+    let date: Date
+    let snapshot: IstiqamahWidgetSnapshot
+    let configuration: MessageWidgetConfigurationIntent
 }
 
 private struct FocusWidgetProvider: AppIntentTimelineProvider {
@@ -111,6 +125,40 @@ private struct ConsistencyWidgetProvider: AppIntentTimelineProvider {
     }
 }
 
+private struct MessageWidgetProvider: AppIntentTimelineProvider {
+    func placeholder(in context: Context) -> MessageWidgetEntry {
+        MessageWidgetEntry(
+            date: Date(),
+            snapshot: .placeholder,
+            configuration: MessageWidgetConfigurationIntent()
+        )
+    }
+
+    func snapshot(
+        for configuration: MessageWidgetConfigurationIntent,
+        in context: Context
+    ) async -> MessageWidgetEntry {
+        MessageWidgetEntry(
+            date: Date(),
+            snapshot: context.isPreview ? .placeholder : loadedSnapshot(),
+            configuration: configuration
+        )
+    }
+
+    func timeline(
+        for configuration: MessageWidgetConfigurationIntent,
+        in context: Context
+    ) async -> Timeline<MessageWidgetEntry> {
+        let date = Date()
+        let entry = MessageWidgetEntry(date: date, snapshot: loadedSnapshot(), configuration: configuration)
+        return Timeline(entries: [entry], policy: .after(date.addingTimeInterval(30 * 60)))
+    }
+
+    private func loadedSnapshot() -> IstiqamahWidgetSnapshot {
+        IstiqamahWidgetStore.load() ?? .empty()
+    }
+}
+
 private enum WidgetTimelineDates {
     static func entries(for snapshot: IstiqamahWidgetSnapshot, now: Date = Date()) -> [Date] {
         var dates = [now]
@@ -153,6 +201,101 @@ struct IstiqamahConsistencyWidget: Widget {
         .configurationDisplayName("Istiqamah Consistency")
         .description("Keep today's completion and your current streak visible.")
         .supportedFamilies([.systemSmall, .systemMedium, .accessoryCircular, .accessoryRectangular])
+    }
+}
+
+struct IstiqamahMessageWidget: Widget {
+    var body: some WidgetConfiguration {
+        AppIntentConfiguration(
+            kind: IstiqamahWidgetStore.messageWidgetKind,
+            intent: MessageWidgetConfigurationIntent.self,
+            provider: MessageWidgetProvider()
+        ) { entry in
+            MessageWidgetView(entry: entry)
+        }
+        .configurationDisplayName("Istiqamah Message")
+        .description("Keep your intention visible on your Home Screen or Lock Screen.")
+        .supportedFamilies([.systemMedium, .accessoryRectangular])
+    }
+}
+
+private struct MessageWidgetView: View {
+    @Environment(\.widgetFamily) private var family
+    @Environment(\.colorScheme) private var colorScheme
+    let entry: MessageWidgetEntry
+
+    private var text: String {
+        entry.snapshot.messageText(override: entry.configuration.customText)
+    }
+
+    var body: some View {
+        Group {
+            if family == .accessoryRectangular {
+                lockScreenMessage
+            } else {
+                homeScreenMessage
+            }
+        }
+        .widgetURL(URL(string: "project-istiqamah://today"))
+        .containerBackground(for: .widget) {
+            LinearGradient(
+                colors: colorScheme == .dark
+                    ? [Color(red: 0.09, green: 0.12, blue: 0.10), Color(red: 0.12, green: 0.17, blue: 0.14)]
+                    : [Color(red: 0.97, green: 0.98, blue: 0.96), .white],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        }
+    }
+
+    private var lockScreenMessage: some View {
+        HStack(alignment: .center, spacing: 8) {
+            IstiqamahMark(primary: .primary, secondary: .primary.opacity(0.55))
+                .frame(width: 23, height: 23)
+                .widgetAccentable()
+            VStack(alignment: .leading, spacing: 2) {
+                Text("MY INTENTION")
+                    .font(.system(size: 9, weight: .bold))
+                    .tracking(0.9)
+                Text(text)
+                    .font(.system(size: 13, weight: .semibold))
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.8)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .combine)
+    }
+
+    private var homeScreenMessage: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                IstiqamahMark(
+                    primary: colorScheme == .dark
+                        ? Color(red: 0.56, green: 0.83, blue: 0.72)
+                        : Color(red: 0.21, green: 0.42, blue: 0.36),
+                    secondary: Color(red: 0.66, green: 0.84, blue: 0.76)
+                )
+                .frame(width: 25, height: 25)
+                .widgetAccentable()
+                Text("MY INTENTION")
+                    .font(.system(size: 10, weight: .bold))
+                    .tracking(1.1)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer(minLength: 0)
+            Text(text)
+                .font(.title3.weight(.semibold))
+                .lineLimit(3)
+                .minimumScaleFactor(0.8)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            Spacer(minLength: 0)
+            Text("PROJECT ISTIQAMAH")
+                .font(.system(size: 9, weight: .bold))
+                .tracking(1.2)
+                .foregroundStyle(.secondary)
+        }
+        .padding(5)
     }
 }
 

@@ -60,6 +60,14 @@ final class DateToolsTests: XCTestCase {
         XCTAssertEqual(restored, snapshot)
     }
 
+    func testMessageWidgetUsesEditedTextOrAppMessage() {
+        let snapshot = IstiqamahWidgetSnapshot.placeholder
+        XCTAssertEqual(snapshot.messageText(override: ""), "Keep showing up.")
+        XCTAssertEqual(snapshot.messageText(override: "  Stay steady  "), "Stay steady")
+        XCTAssertEqual(snapshot.messageText(override: String(repeating: "a", count: 100)).count, 80)
+        XCTAssertEqual(IstiqamahWidgetSnapshot.empty().personalMessage, "Keep showing up.")
+    }
+
     func testWidgetStoreUsesConfiguredAppGroup() {
         XCTAssertEqual(
             IstiqamahWidgetStore.appGroupIdentifier,

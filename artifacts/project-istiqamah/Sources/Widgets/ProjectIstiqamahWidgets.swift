@@ -7,5 +7,6 @@ struct ProjectIstiqamahWidgets: WidgetBundle {
         BlockLiveActivityWidget()
         IstiqamahFocusWidget()
         IstiqamahConsistencyWidget()
+        IstiqamahMessageWidget()
     }
 }

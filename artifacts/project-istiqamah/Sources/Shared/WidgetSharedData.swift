@@ -30,7 +30,7 @@ struct IstiqamahWidgetSnapshot: Codable, Hashable, Sendable {
     static func empty(at date: Date = Date()) -> IstiqamahWidgetSnapshot {
         IstiqamahWidgetSnapshot(
             updatedAt: date,
-            personalMessage: "Open Project Istiqamah to sync.",
+            personalMessage: "Keep showing up.",
             currentBlock: nil,
             nextBlock: nil,
             completedToday: 0,
@@ -62,6 +62,13 @@ struct IstiqamahWidgetSnapshot: Codable, Hashable, Sendable {
         totalToday: 4,
         currentStreak: 7
     )
+
+    func messageText(override: String) -> String {
+        let customText = override.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !customText.isEmpty { return String(customText.prefix(80)) }
+        let savedText = personalMessage.trimmingCharacters(in: .whitespacesAndNewlines)
+        return savedText.isEmpty ? "Keep showing up." : savedText
+    }
 }
 
 enum IstiqamahWidgetStore {
@@ -69,6 +76,7 @@ enum IstiqamahWidgetStore {
     static let snapshotKey = "istiqamah.widget.snapshot.v1"
     static let focusWidgetKind = "ProjectIstiqamah.FocusWidget"
     static let consistencyWidgetKind = "ProjectIstiqamah.ConsistencyWidget"
+    static let messageWidgetKind = "ProjectIstiqamah.MessageWidget"
     private static let snapshotFileName = "istiqamah-widget-snapshot.json"
     private static let originalAppBundleIdentifier = "com.projectistiqamah.app"
     private static let originalWidgetBundleIdentifier = "com.projectistiqamah.app.widgets"
@@ -145,7 +153,7 @@ enum IstiqamahWidgetStore {
               let data = try? JSONEncoder().encode(snapshot) else { return false }
         let fileURL = sharedContainer.url.appendingPathComponent(snapshotFileName)
         do {
-            try data.write(to: fileURL, options: .atomic)
+            try data.write(to: fileURL, options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
             guard let writtenData = try? Data(contentsOf: fileURL),
                   decode(writtenData) == snapshot else { return false }
             // Retain the shared-defaults copy for migration from builds that

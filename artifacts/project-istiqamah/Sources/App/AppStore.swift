@@ -516,9 +516,8 @@ final class AppStore: ObservableObject {
             currentStreak: currentStreak(at: now)
         )
         if IstiqamahWidgetStore.save(snapshot) {
-            widgetSyncStatus = "Updated now"
-            WidgetCenter.shared.reloadTimelines(ofKind: IstiqamahWidgetStore.focusWidgetKind)
-            WidgetCenter.shared.reloadTimelines(ofKind: IstiqamahWidgetStore.consistencyWidgetKind)
+            widgetSyncStatus = "Saved — widget refresh requested"
+            WidgetCenter.shared.reloadAllTimelines()
         } else {
             widgetSyncStatus = "Sharing unavailable — reinstall with App Groups enabled"
         }
