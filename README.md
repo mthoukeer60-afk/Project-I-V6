@@ -32,7 +32,7 @@ The native application lives in [`artifacts/project-istiqamah`](artifacts/projec
 | Background refresh | Reloads saved blocks during system-granted background time, refreshes notifications and Live Activities, and schedules the next best-effort wakeup near a block transition |
 | Dynamic Island | Branded compact mark and remaining time; touch-and-hold expanded controls, large timer, and four-column block metrics |
 | Lock Screen | Branded timer header with circular Pause/Resume and End controls, divider, and elapsed/start/end/status metrics |
-| Widgets | Focus, Consistency, and wide Reminder widgets; Focus and Consistency offer small circular Lock Screen options, and Reminder supports a 100-character text override in Edit Widget |
+| Widgets | Focus, Consistency, Reminder, Lock Screen-only Pulse, and a plain-text-only Home/Lock Screen widget with its own independent 100-character field in Settings; Reminder and Pulse accept text overrides in Edit Widget |
 | Deep links | Notification and Live Activity taps open the Today tab on the relevant date and block; an ended-block link can record completion |
 | Local data | Codable JSON persistence in Application Support, visible save/recovery failures, preservation of unreadable data, and exclusion of private app data from device/iCloud backup |
 | Preferences | Reminder toggle, early-reminder and snooze timing, bundled/system/imported sound choice, widget message, haptic toggle, notification permission status, and shortcut to iOS Settings |
@@ -122,6 +122,16 @@ unsigned IPA artifact. See [`docs/github-actions-ios.md`](docs/github-actions-io
 - Lock Screen widgets and Live Activities are independent system surfaces. If a
   person installs one of the accessory widgets, iOS can show it in the widget
   area while the running block Live Activity remains visible below it.
+- Pulse occupies one standard rectangular Lock Screen slot (not the entire
+  widget row). Its countdown uses WidgetKit's system-rendered timer text; the
+  ring changes when widget data refreshes. WidgetKit doesn't play continuously
+  looping custom GIFs, and up to 100 characters may be saved even when only
+  the opening words fit in the compact Lock Screen layout.
+- Plain Text shows only its own text from Settings: no icon, heading, reminder,
+  or progress decoration. It offers small and medium Home Screen sizes and one
+  rectangular Lock Screen size; its field starts empty and older saved settings
+  and shared snapshots decode without losing other widget data. The Lock Screen
+  may truncate longer text because iOS fixes that widget's size.
 - An unsigned IPA must be signed before it can be installed on an iPhone.
 - Standard time-sensitive notification sounds still respect the device's notification, silent-mode, and Focus settings. Clock-style overrides require AlarmKit on iOS 26 or Apple's restricted Critical Alerts entitlement.
 - Templates, tags, and search are not implemented.

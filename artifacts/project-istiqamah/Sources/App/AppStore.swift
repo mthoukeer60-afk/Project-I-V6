@@ -173,6 +173,7 @@ final class AppStore: ObservableObject {
         preferences.reminderMinutes = min(15, max(5, preferences.reminderMinutes))
         preferences.snoozeMinutes = AppPreferences.normalizedSnoozeMinutes(preferences.snoozeMinutes)
         preferences.widgetMessage = AppPreferences.normalizedWidgetMessage(preferences.widgetMessage)
+        preferences.plainWidgetText = AppPreferences.normalizedWidgetMessage(preferences.plainWidgetText)
         if preferences.reminderSound == .custom,
            AppPreferences.safeSoundFileName(preferences.customReminderSoundFileName) == nil {
             preferences.reminderSound = .system
@@ -509,6 +510,7 @@ final class AppStore: ObservableObject {
         let snapshot = IstiqamahWidgetSnapshot(
             updatedAt: now,
             personalMessage: preferences.widgetMessage,
+            plainText: preferences.plainWidgetText,
             currentBlock: current.map(widgetSummary),
             nextBlock: next.map(widgetSummary),
             completedToday: completedToday,

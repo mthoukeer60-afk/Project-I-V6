@@ -16,6 +16,7 @@ final class DateToolsTests: XCTestCase {
 
         XCTAssertEqual(preferences.snoozeMinutes, 5)
         XCTAssertEqual(preferences.widgetMessage, "Keep showing up.")
+        XCTAssertEqual(preferences.plainWidgetText, "")
         XCTAssertNil(preferences.customReminderSoundFileName)
     }
 
@@ -51,6 +52,18 @@ final class DateToolsTests: XCTestCase {
         XCTAssertFalse(normalized.contains("\n"))
     }
 
+    func testPlainWidgetTextPersistsIndependentlyAndIsLengthBounded() throws {
+        let preferences = AppPreferences(
+            widgetMessage: "Reminder stays separate",
+            plainWidgetText: "Another\n" + String(repeating: "b", count: 120)
+        )
+        let restored = try JSONDecoder().decode(AppPreferences.self, from: JSONEncoder().encode(preferences))
+
+        XCTAssertEqual(restored.widgetMessage, "Reminder stays separate")
+        XCTAssertEqual(restored.plainWidgetText.count, 100)
+        XCTAssertFalse(restored.plainWidgetText.contains("\n"))
+    }
+
     func testWidgetSnapshotRoundTrips() throws {
         let snapshot = IstiqamahWidgetSnapshot.placeholder
         let restored = try JSONDecoder().decode(
@@ -61,6 +74,31 @@ final class DateToolsTests: XCTestCase {
         XCTAssertEqual(restored, snapshot)
     }
 
+    func testLegacyWidgetSnapshotWithoutPlainTextStillDecodes() throws {
+        let json = Data(#"{"updatedAt":0,"personalMessage":"Saved reminder","completedToday":0,"totalToday":0,"currentStreak":0}"#.utf8)
+        let snapshot = try JSONDecoder().decode(IstiqamahWidgetSnapshot.self, from: json)
+
+        XCTAssertEqual(snapshot.messageText(override: ""), "Saved reminder")
+        XCTAssertEqual(snapshot.plainWidgetText, "")
+    }
+
+    func testPlainTextWidgetUsesOnlyItsOwnSnapshotText() {
+        let snapshot = IstiqamahWidgetSnapshot(
+            updatedAt: Date(),
+            personalMessage: "Reminder text",
+            plainText: "Separate plain text",
+            currentBlock: nil,
+            nextBlock: nil,
+            completedToday: 0,
+            totalToday: 0,
+            currentStreak: 0
+        )
+
+        XCTAssertEqual(snapshot.plainWidgetText, "Separate plain text")
+        XCTAssertEqual(snapshot.messageText(override: ""), "Reminder text")
+        XCTAssertEqual(IstiqamahWidgetStore.plainTextWidgetKind, "ProjectIstiqamah.PlainTextWidget")
+    }
+
     func testMessageWidgetUsesEditedTextOrAppMessage() {
         let snapshot = IstiqamahWidgetSnapshot.placeholder
         XCTAssertEqual(snapshot.messageText(override: ""), "Keep showing up.")
@@ -68,6 +106,19 @@ final class DateToolsTests: XCTestCase {
         XCTAssertEqual(snapshot.messageText(override: "  One line\nthen another  "), "One line then another")
         XCTAssertEqual(snapshot.messageText(override: String(repeating: "a", count: 120)).count, 100)
         XCTAssertEqual(IstiqamahWidgetSnapshot.empty().personalMessage, "Keep showing up.")
+    }
+
+    func testPulseWidgetResolvesActiveBlockAtTimelineBoundaries() throws {
+        let snapshot = IstiqamahWidgetSnapshot.placeholder
+        let current = try XCTUnwrap(snapshot.currentBlock)
+        let next = try XCTUnwrap(snapshot.nextBlock)
+
+        XCTAssertNil(snapshot.runningBlock(at: current.startDate.addingTimeInterval(-1)))
+        XCTAssertEqual(snapshot.runningBlock(at: current.startDate)?.id, current.id)
+        XCTAssertNil(snapshot.runningBlock(at: current.endDate))
+        XCTAssertEqual(snapshot.runningBlock(at: next.startDate)?.id, next.id)
+        XCTAssertNil(snapshot.runningBlock(at: next.endDate))
+        XCTAssertEqual(IstiqamahWidgetStore.pulseWidgetKind, "ProjectIstiqamah.PulseWidget")
     }
 
     func testWidgetStoreUsesConfiguredAppGroup() {

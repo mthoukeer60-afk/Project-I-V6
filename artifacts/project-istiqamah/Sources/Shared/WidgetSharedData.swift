@@ -21,6 +21,8 @@ struct WidgetBlockSummary: Codable, Hashable, Sendable {
 struct IstiqamahWidgetSnapshot: Codable, Hashable, Sendable {
     let updatedAt: Date
     let personalMessage: String
+    // Optional so snapshots written by older versions still decode successfully.
+    let plainText: String?
     let currentBlock: WidgetBlockSummary?
     let nextBlock: WidgetBlockSummary?
     let completedToday: Int
@@ -31,6 +33,7 @@ struct IstiqamahWidgetSnapshot: Codable, Hashable, Sendable {
         IstiqamahWidgetSnapshot(
             updatedAt: date,
             personalMessage: "Keep showing up.",
+            plainText: nil,
             currentBlock: nil,
             nextBlock: nil,
             completedToday: 0,
@@ -42,6 +45,7 @@ struct IstiqamahWidgetSnapshot: Codable, Hashable, Sendable {
     static let placeholder = IstiqamahWidgetSnapshot(
         updatedAt: Date(),
         personalMessage: "Keep showing up.",
+        plainText: "Your words here.",
         currentBlock: WidgetBlockSummary(
             id: UUID(uuidString: "00000000-0000-0000-0000-000000000001") ?? UUID(),
             name: "Deep Work",
@@ -70,6 +74,17 @@ struct IstiqamahWidgetSnapshot: Codable, Hashable, Sendable {
         let savedText = personalMessage.trimmingCharacters(in: .whitespacesAndNewlines)
         return savedText.isEmpty ? "Keep showing up." : String(savedText.prefix(100))
     }
+
+    var plainWidgetText: String {
+        String((plainText ?? "").trimmingCharacters(in: .whitespacesAndNewlines).prefix(100))
+    }
+
+    func runningBlock(at date: Date) -> WidgetBlockSummary? {
+        for block in [currentBlock, nextBlock].compactMap({ $0 }) {
+            if block.startDate <= date && date < block.endDate { return block }
+        }
+        return nil
+    }
 }
 
 enum IstiqamahWidgetStore {
@@ -78,6 +93,8 @@ enum IstiqamahWidgetStore {
     static let focusWidgetKind = "ProjectIstiqamah.FocusWidget"
     static let consistencyWidgetKind = "ProjectIstiqamah.ConsistencyWidget"
     static let messageWidgetKind = "ProjectIstiqamah.MessageWidget"
+    static let pulseWidgetKind = "ProjectIstiqamah.PulseWidget"
+    static let plainTextWidgetKind = "ProjectIstiqamah.PlainTextWidget"
     private static let snapshotFileName = "istiqamah-widget-snapshot.json"
     private static let originalAppBundleIdentifier = "com.projectistiqamah.app"
     private static let originalWidgetBundleIdentifier = "com.projectistiqamah.app.widgets"

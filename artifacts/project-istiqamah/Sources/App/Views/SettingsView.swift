@@ -112,11 +112,20 @@ struct SettingsView: View {
                     Text("Longer reminders may still be shortened on the Lock Screen because iOS fixes the widget size.")
                         .font(.caption)
                         .foregroundStyle(AppTheme.secondaryText)
+                    TextField(
+                        "Plain text widget (separate text)",
+                        text: plainWidgetTextBinding,
+                        axis: .vertical
+                    )
+                    .lineLimit(2...4)
+                    Text("\(store.preferences.plainWidgetText.count)/100 characters · only this widget uses this text")
+                        .font(.caption)
+                        .foregroundStyle(AppTheme.secondaryText)
                     LabeledContent("Widget data", value: store.widgetSyncStatus)
                     Button("Refresh Widgets", systemImage: "arrow.clockwise") {
                         store.refreshSystemFeatures()
                     }
-                    Text("Add Focus, Consistency, or Reminder from the widget gallery. The wide Reminder widget shows your text from here, or you can set separate text in Edit Widget. Focus and Consistency also offer small circular Lock Screen widgets. iOS controls how many widgets fit on the Lock Screen. If an older widget still shows a sync prompt after updating, remove it and add it again.")
+                    Text("Add Focus, Consistency, Reminder, Pulse, or Plain Text from the widget gallery. Plain Text shows only the separate text entered above, on the Home Screen or in one rectangular Lock Screen slot. Leave the field empty to leave that widget blank. Pulse shows a focus countdown and completion ring alongside your reminder. Edit Reminder or Pulse to give either widget its own text. iOS cannot make one widget span the full Lock Screen row or play a looping GIF. If an older widget still shows a sync prompt after updating, remove it and add it again.")
                         .font(.caption)
                         .foregroundStyle(AppTheme.secondaryText)
                 }
@@ -250,6 +259,17 @@ struct SettingsView: View {
             set: { value in
                 store.updatePreferences {
                     $0.widgetMessage = AppPreferences.normalizedWidgetMessage(value)
+                }
+            }
+        )
+    }
+
+    private var plainWidgetTextBinding: Binding<String> {
+        Binding(
+            get: { store.preferences.plainWidgetText },
+            set: { value in
+                store.updatePreferences {
+                    $0.plainWidgetText = AppPreferences.normalizedWidgetMessage(value)
                 }
             }
         )

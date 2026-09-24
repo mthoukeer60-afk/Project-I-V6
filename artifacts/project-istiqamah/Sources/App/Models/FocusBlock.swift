@@ -109,6 +109,7 @@ struct AppPreferences: Codable, Equatable {
     var customReminderSoundFileName: String?
     var customReminderSoundDisplayName: String?
     var widgetMessage = "Keep showing up."
+    var plainWidgetText = ""
 
     private enum CodingKeys: String, CodingKey {
         case haptics
@@ -119,6 +120,7 @@ struct AppPreferences: Codable, Equatable {
         case customReminderSoundFileName
         case customReminderSoundDisplayName
         case widgetMessage
+        case plainWidgetText
     }
 
     init(
@@ -129,7 +131,8 @@ struct AppPreferences: Codable, Equatable {
         reminderSound: ReminderSound = .system,
         customReminderSoundFileName: String? = nil,
         customReminderSoundDisplayName: String? = nil,
-        widgetMessage: String = "Keep showing up."
+        widgetMessage: String = "Keep showing up.",
+        plainWidgetText: String = ""
     ) {
         self.haptics = haptics
         self.reminders = reminders
@@ -141,6 +144,7 @@ struct AppPreferences: Codable, Equatable {
             customReminderSoundDisplayName
         )
         self.widgetMessage = Self.normalizedWidgetMessage(widgetMessage)
+        self.plainWidgetText = Self.normalizedWidgetMessage(plainWidgetText)
         if reminderSound == .custom, self.customReminderSoundFileName == nil {
             self.reminderSound = .system
         }
@@ -166,6 +170,9 @@ struct AppPreferences: Codable, Equatable {
         )
         widgetMessage = Self.normalizedWidgetMessage(
             try values.decodeIfPresent(String.self, forKey: .widgetMessage) ?? "Keep showing up."
+        )
+        plainWidgetText = Self.normalizedWidgetMessage(
+            try values.decodeIfPresent(String.self, forKey: .plainWidgetText) ?? ""
         )
         if reminderSound == .custom, customReminderSoundFileName == nil {
             reminderSound = .system

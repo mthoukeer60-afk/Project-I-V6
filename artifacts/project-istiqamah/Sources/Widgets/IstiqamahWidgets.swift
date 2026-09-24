@@ -51,6 +51,11 @@ private struct MessageWidgetEntry: TimelineEntry {
     let configuration: MessageWidgetConfigurationIntent
 }
 
+private struct PlainTextWidgetEntry: TimelineEntry {
+    let date: Date
+    let text: String
+}
+
 private struct FocusWidgetProvider: AppIntentTimelineProvider {
     func placeholder(in context: Context) -> FocusWidgetEntry {
         FocusWidgetEntry(
@@ -149,13 +154,35 @@ private struct MessageWidgetProvider: AppIntentTimelineProvider {
         for configuration: MessageWidgetConfigurationIntent,
         in context: Context
     ) async -> Timeline<MessageWidgetEntry> {
-        let date = Date()
-        let entry = MessageWidgetEntry(date: date, snapshot: loadedSnapshot(), configuration: configuration)
-        return Timeline(entries: [entry], policy: .after(date.addingTimeInterval(30 * 60)))
+        let snapshot = loadedSnapshot()
+        let dates = WidgetTimelineDates.entries(for: snapshot)
+        let entries = dates.map {
+            MessageWidgetEntry(date: $0, snapshot: snapshot, configuration: configuration)
+        }
+        return Timeline(entries: entries, policy: .after(WidgetTimelineDates.reloadDate(after: dates)))
     }
 
     private func loadedSnapshot() -> IstiqamahWidgetSnapshot {
         IstiqamahWidgetStore.load() ?? .empty()
+    }
+}
+
+private struct PlainTextWidgetProvider: TimelineProvider {
+    func placeholder(in context: Context) -> PlainTextWidgetEntry {
+        PlainTextWidgetEntry(date: Date(), text: IstiqamahWidgetSnapshot.placeholder.plainWidgetText)
+    }
+
+    func getSnapshot(in context: Context, completion: @escaping (PlainTextWidgetEntry) -> Void) {
+        completion(context.isPreview ? placeholder(in: context) : loadedEntry(at: Date()))
+    }
+
+    func getTimeline(in context: Context, completion: @escaping (Timeline<PlainTextWidgetEntry>) -> Void) {
+        let date = Date()
+        completion(Timeline(entries: [loadedEntry(at: date)], policy: .after(date.addingTimeInterval(30 * 60))))
+    }
+
+    private func loadedEntry(at date: Date) -> PlainTextWidgetEntry {
+        PlainTextWidgetEntry(date: date, text: (IstiqamahWidgetStore.load() ?? .empty()).plainWidgetText)
     }
 }
 
@@ -216,6 +243,134 @@ struct IstiqamahMessageWidget: Widget {
         .configurationDisplayName("Istiqamah Reminder")
         .description("Keep your reminder visible on your Home Screen or Lock Screen.")
         .supportedFamilies([.systemMedium, .accessoryRectangular])
+    }
+}
+
+struct IstiqamahPulseWidget: Widget {
+    var body: some WidgetConfiguration {
+        AppIntentConfiguration(
+            kind: IstiqamahWidgetStore.pulseWidgetKind,
+            intent: MessageWidgetConfigurationIntent.self,
+            provider: MessageWidgetProvider()
+        ) { entry in
+            PulseWidgetView(entry: entry)
+        }
+        .configurationDisplayName("Istiqamah Lock Screen Pulse")
+        .description("A live focus countdown, completion ring, and your reminder. Lock Screen only.")
+        .supportedFamilies([.accessoryRectangular])
+    }
+}
+
+struct IstiqamahPlainTextWidget: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(
+            kind: IstiqamahWidgetStore.plainTextWidgetKind,
+            provider: PlainTextWidgetProvider()
+        ) { entry in
+            PlainTextWidgetView(entry: entry)
+        }
+        .configurationDisplayName("Istiqamah Plain Text")
+        .description("Just the text you enter in Settings, on the Home Screen or Lock Screen.")
+        .supportedFamilies([.systemSmall, .systemMedium, .accessoryRectangular])
+    }
+}
+
+private struct PlainTextWidgetView: View {
+    @Environment(\.widgetFamily) private var family
+    let entry: PlainTextWidgetEntry
+
+    var body: some View {
+        Text(entry.text)
+            .font(textFont)
+            .multilineTextAlignment(.center)
+            .lineLimit(family == .accessoryRectangular ? 4 : family == .systemSmall ? 7 : 6)
+            .minimumScaleFactor(0.7)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .widgetURL(URL(string: "project-istiqamah://today"))
+            .containerBackground(for: .widget) { Color.clear }
+    }
+
+    private var textFont: Font {
+        switch family {
+        case .accessoryRectangular: .system(size: 11, weight: .medium)
+        case .systemSmall: .system(size: 16, weight: .medium)
+        default: .system(size: 21, weight: .medium)
+        }
+    }
+}
+
+private struct PulseWidgetView: View {
+    let entry: MessageWidgetEntry
+
+    private var runningBlock: WidgetBlockSummary? {
+        entry.snapshot.runningBlock(at: entry.date)
+    }
+
+    private var upcomingBlock: WidgetBlockSummary? {
+        guard let next = entry.snapshot.nextBlock, next.startDate > entry.date else { return nil }
+        return next
+    }
+
+    private var progress: Double {
+        guard entry.snapshot.totalToday > 0 else { return 0 }
+        return min(1, max(0, Double(entry.snapshot.completedToday) / Double(entry.snapshot.totalToday)))
+    }
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Gauge(value: progress) {
+                Image(systemName: "checkmark")
+            } currentValueLabel: {
+                Text("\(entry.snapshot.completedToday)")
+            }
+            .gaugeStyle(.accessoryCircularCapacity)
+            .widgetAccentable()
+            .frame(width: 30, height: 30)
+
+            VStack(alignment: .leading, spacing: 1) {
+                HStack(spacing: 2) {
+                    Text("PULSE")
+                        .font(.system(size: 8, weight: .bold))
+                        .tracking(0.5)
+                    Spacer(minLength: 1)
+                    status
+                        .font(.system(size: 10, weight: .semibold))
+                        .monospacedDigit()
+                }
+                Text(entry.snapshot.messageText(override: entry.configuration.customText))
+                    .font(.system(size: 10, weight: .medium))
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.75)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                Text(entry.snapshot.currentStreak > 0
+                    ? "\(entry.snapshot.currentStreak)-DAY STREAK"
+                    : "\(entry.snapshot.completedToday)/\(entry.snapshot.totalToday) TODAY")
+                    .font(.system(size: 8, weight: .bold))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .combine)
+        .widgetURL(runningBlock?.deepLink ?? upcomingBlock?.deepLink ?? URL(string: "project-istiqamah://today"))
+        .containerBackground(for: .widget) { Color.clear }
+    }
+
+    @ViewBuilder
+    private var status: some View {
+        if let runningBlock {
+            if runningBlock.isPaused {
+                Text("PAUSED")
+            } else {
+                Text(runningBlock.endDate, style: .timer)
+                    .contentTransition(.numericText(countsDown: true))
+            }
+        } else if let upcomingBlock {
+            Text(upcomingBlock.startDate, style: .time)
+        } else {
+            Text("TODAY")
+        }
     }
 }
 

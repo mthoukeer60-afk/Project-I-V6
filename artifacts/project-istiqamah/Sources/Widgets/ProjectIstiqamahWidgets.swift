@@ -8,5 +8,7 @@ struct ProjectIstiqamahWidgets: WidgetBundle {
         IstiqamahFocusWidget()
         IstiqamahConsistencyWidget()
         IstiqamahMessageWidget()
+        IstiqamahPulseWidget()
+        IstiqamahPlainTextWidget()
     }
 }
