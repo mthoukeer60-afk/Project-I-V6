@@ -46,7 +46,8 @@ final class DateToolsTests: XCTestCase {
         let value = "first line\n" + String(repeating: "a", count: 90)
         let normalized = AppPreferences.normalizedWidgetMessage(value)
 
-        XCTAssertEqual(normalized.count, 80)
+        XCTAssertEqual(normalized.count, 100)
+        XCTAssertEqual(normalized, "first line " + String(repeating: "a", count: 89))
         XCTAssertFalse(normalized.contains("\n"))
     }
 
@@ -64,7 +65,8 @@ final class DateToolsTests: XCTestCase {
         let snapshot = IstiqamahWidgetSnapshot.placeholder
         XCTAssertEqual(snapshot.messageText(override: ""), "Keep showing up.")
         XCTAssertEqual(snapshot.messageText(override: "  Stay steady  "), "Stay steady")
-        XCTAssertEqual(snapshot.messageText(override: String(repeating: "a", count: 100)).count, 80)
+        XCTAssertEqual(snapshot.messageText(override: "  One line\nthen another  "), "One line then another")
+        XCTAssertEqual(snapshot.messageText(override: String(repeating: "a", count: 120)).count, 100)
         XCTAssertEqual(IstiqamahWidgetSnapshot.empty().personalMessage, "Keep showing up.")
     }
 

@@ -32,7 +32,7 @@ The native application lives in [`artifacts/project-istiqamah`](artifacts/projec
 | Background refresh | Reloads saved blocks during system-granted background time, refreshes notifications and Live Activities, and schedules the next best-effort wakeup near a block transition |
 | Dynamic Island | Branded compact mark and remaining time; touch-and-hold expanded controls, large timer, and four-column block metrics |
 | Lock Screen | Branded timer header with circular Pause/Resume and End controls, divider, and elapsed/start/end/status metrics |
-| Widgets | Separate Focus, Consistency, and wide Message widgets for Home Screen and Lock Screen; Message supports an independent text override in Edit Widget |
+| Widgets | Focus, Consistency, and wide Reminder widgets; Focus and Consistency offer small circular Lock Screen options, and Reminder supports a 100-character text override in Edit Widget |
 | Deep links | Notification and Live Activity taps open the Today tab on the relevant date and block; an ended-block link can record completion |
 | Local data | Codable JSON persistence in Application Support, visible save/recovery failures, preservation of unreadable data, and exclusion of private app data from device/iCloud backup |
 | Preferences | Reminder toggle, early-reminder and snooze timing, bundled/system/imported sound choice, widget message, haptic toggle, notification permission status, and shortcut to iOS Settings |
@@ -118,7 +118,7 @@ unsigned IPA artifact. See [`docs/github-actions-ios.md`](docs/github-actions-io
   to the App Group container with protection that permits reads after the
   device's first unlock. In Settings, `Widget data` reports whether the app
   saved a snapshot, not whether iOS has rendered every widget yet. To use the
-  wide Message widget without shared data, set its text in Edit Widget.
+  wide Reminder widget without shared data, set its text in Edit Widget.
 - Lock Screen widgets and Live Activities are independent system surfaces. If a
   person installs one of the accessory widgets, iOS can show it in the widget
   area while the running block Live Activity remains visible below it.

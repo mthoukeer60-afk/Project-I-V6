@@ -101,16 +101,22 @@ struct SettingsView: View {
 
                 Section("Widgets") {
                     TextField(
-                        "Personal widget message",
+                        "Widget reminder",
                         text: widgetMessageBinding,
                         axis: .vertical
                     )
-                    .lineLimit(2...3)
+                    .lineLimit(2...4)
+                    Text("\(store.preferences.widgetMessage.count)/100 characters")
+                        .font(.caption)
+                        .foregroundStyle(AppTheme.secondaryText)
+                    Text("Longer reminders may still be shortened on the Lock Screen because iOS fixes the widget size.")
+                        .font(.caption)
+                        .foregroundStyle(AppTheme.secondaryText)
                     LabeledContent("Widget data", value: store.widgetSyncStatus)
                     Button("Refresh Widgets", systemImage: "arrow.clockwise") {
                         store.refreshSystemFeatures()
                     }
-                    Text("Add Focus, Consistency, or Message from the widget gallery. The wide Message widget shows your text from here, or you can set a separate message in Edit Widget. Lock Screen widgets can appear alongside a running Live Activity. If an older Lock Screen widget still shows a sync prompt after updating the app, remove it and add it again.")
+                    Text("Add Focus, Consistency, or Reminder from the widget gallery. The wide Reminder widget shows your text from here, or you can set separate text in Edit Widget. Focus and Consistency also offer small circular Lock Screen widgets. iOS controls how many widgets fit on the Lock Screen. If an older widget still shows a sync prompt after updating, remove it and add it again.")
                         .font(.caption)
                         .foregroundStyle(AppTheme.secondaryText)
                 }

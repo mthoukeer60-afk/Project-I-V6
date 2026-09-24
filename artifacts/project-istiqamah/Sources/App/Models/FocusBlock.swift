@@ -181,7 +181,7 @@ struct AppPreferences: Codable, Equatable {
 
     static func normalizedWidgetMessage(_ message: String) -> String {
         let cleaned = message.replacingOccurrences(of: "\n", with: " ")
-        return String(cleaned.prefix(80))
+        return String(cleaned.prefix(100))
     }
 
     static func safeSoundFileName(_ fileName: String?) -> String? {

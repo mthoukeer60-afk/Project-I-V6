@@ -64,10 +64,11 @@ struct IstiqamahWidgetSnapshot: Codable, Hashable, Sendable {
     )
 
     func messageText(override: String) -> String {
-        let customText = override.trimmingCharacters(in: .whitespacesAndNewlines)
-        if !customText.isEmpty { return String(customText.prefix(80)) }
+        let customText = override.replacingOccurrences(of: "\n", with: " ")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        if !customText.isEmpty { return String(customText.prefix(100)) }
         let savedText = personalMessage.trimmingCharacters(in: .whitespacesAndNewlines)
-        return savedText.isEmpty ? "Keep showing up." : savedText
+        return savedText.isEmpty ? "Keep showing up." : String(savedText.prefix(100))
     }
 }
 

@@ -7,7 +7,7 @@ struct FocusWidgetConfigurationIntent: WidgetConfigurationIntent {
     static var title: LocalizedStringResource = "Focus"
     static var description = IntentDescription("Choose what the Focus widget shows.")
 
-    @Parameter(title: "Show personal message", default: true)
+    @Parameter(title: "Show reminder", default: true)
     var showPersonalMessage: Bool
 
     @Parameter(title: "Show next block", default: true)
@@ -21,15 +21,15 @@ struct ConsistencyWidgetConfigurationIntent: WidgetConfigurationIntent {
     @Parameter(title: "Show streak", default: true)
     var showStreak: Bool
 
-    @Parameter(title: "Show personal message", default: true)
+    @Parameter(title: "Show reminder", default: true)
     var showPersonalMessage: Bool
 }
 
 struct MessageWidgetConfigurationIntent: WidgetConfigurationIntent {
-    static var title: LocalizedStringResource = "Message"
-    static var description = IntentDescription("Display your intention, or set text for this widget only.")
+    static var title: LocalizedStringResource = "Reminder"
+    static var description = IntentDescription("Display your reminder, or set text for this widget only.")
 
-    @Parameter(title: "Widget text (optional)", default: "")
+    @Parameter(title: "Reminder text (optional)", default: "")
     var customText: String
 }
 
@@ -184,8 +184,8 @@ struct IstiqamahFocusWidget: Widget {
             FocusWidgetView(entry: entry)
         }
         .configurationDisplayName("Istiqamah Focus")
-        .description("See the running block, the next block, and your personal intention.")
-        .supportedFamilies([.systemSmall, .systemMedium, .accessoryRectangular, .accessoryInline])
+        .description("See your current or next block and your reminder.")
+        .supportedFamilies([.systemSmall, .systemMedium, .accessoryRectangular, .accessoryCircular, .accessoryInline])
     }
 }
 
@@ -213,8 +213,8 @@ struct IstiqamahMessageWidget: Widget {
         ) { entry in
             MessageWidgetView(entry: entry)
         }
-        .configurationDisplayName("Istiqamah Message")
-        .description("Keep your intention visible on your Home Screen or Lock Screen.")
+        .configurationDisplayName("Istiqamah Reminder")
+        .description("Keep your reminder visible on your Home Screen or Lock Screen.")
         .supportedFamilies([.systemMedium, .accessoryRectangular])
     }
 }
@@ -249,19 +249,15 @@ private struct MessageWidgetView: View {
     }
 
     private var lockScreenMessage: some View {
-        HStack(alignment: .center, spacing: 8) {
-            IstiqamahMark(primary: .primary, secondary: .primary.opacity(0.55))
-                .frame(width: 23, height: 23)
-                .widgetAccentable()
-            VStack(alignment: .leading, spacing: 2) {
-                Text("MY INTENTION")
-                    .font(.system(size: 9, weight: .bold))
-                    .tracking(0.9)
-                Text(text)
-                    .font(.system(size: 13, weight: .semibold))
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.8)
-            }
+        VStack(alignment: .leading, spacing: 1) {
+            Text("REMINDER")
+                .font(.system(size: 8, weight: .bold))
+                .tracking(0.5)
+            Text(text)
+                .font(.system(size: 10, weight: .semibold))
+                .lineLimit(4)
+                .minimumScaleFactor(0.75)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .combine)
@@ -278,7 +274,7 @@ private struct MessageWidgetView: View {
                 )
                 .frame(width: 25, height: 25)
                 .widgetAccentable()
-                Text("MY INTENTION")
+                Text("REMINDER")
                     .font(.system(size: 10, weight: .bold))
                     .tracking(1.1)
                     .foregroundStyle(.secondary)
@@ -286,8 +282,8 @@ private struct MessageWidgetView: View {
             Spacer(minLength: 0)
             Text(text)
                 .font(.title3.weight(.semibold))
-                .lineLimit(3)
-                .minimumScaleFactor(0.8)
+                .lineLimit(4)
+                .minimumScaleFactor(0.7)
                 .frame(maxWidth: .infinity, alignment: .leading)
             Spacer(minLength: 0)
             Text("PROJECT ISTIQAMAH")
@@ -334,6 +330,8 @@ private struct FocusWidgetView: View {
                 accessoryInline
             case .accessoryRectangular:
                 accessoryRectangular
+            case .accessoryCircular:
+                accessoryCircular
             case .systemMedium:
                 systemMedium
             default:
@@ -352,6 +350,18 @@ private struct FocusWidgetView: View {
         } icon: {
             Image(systemName: runningBlock == nil ? "calendar" : "timer")
         }
+    }
+
+    private var accessoryCircular: some View {
+        VStack(spacing: 2) {
+            Image(systemName: runningBlock == nil ? "calendar" : "timer")
+                .font(.system(size: 17, weight: .medium))
+                .widgetAccentable()
+            Text(runningBlock != nil ? "NOW" : upcomingBlock != nil ? "NEXT" : "PLAN")
+                .font(.system(size: 9, weight: .bold))
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessorySummary)
     }
 
     private var accessoryRectangular: some View {
